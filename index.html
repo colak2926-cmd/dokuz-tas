@@ -6,47 +6,23 @@
 <title>Dokuz Taş Oyunu</title>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0b1020;
-  color:white;
-}
-.card{
-  max-width:400px;
-  margin:60px auto;
-  background:#121a33;
-  padding:20px;
-  border-radius:12px;
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:8px;
-  border:none;
-}
-button{
-  background:#3b82f6;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-#game{
-  display:none;
-  text-align:center;
-}
+body{margin:0;font-family:Arial, sans-serif;background:#0b1020;color:white}
+.card{max-width:420px;margin:60px auto;background:#121a33;padding:20px;border-radius:12px}
+input,button{width:100%;padding:12px;margin-top:10px;border-radius:8px;border:none}
+button{background:#3b82f6;color:white;font-weight:bold;cursor:pointer}
+#game{display:none;text-align:center}
+.small{opacity:.8;font-size:12px;line-height:1.4;margin-top:10px}
 </style>
 </head>
 
 <body>
-
 <div class="card" id="login">
   <h2>Oyuna Giriş</h2>
   <input id="name" placeholder="Ad Soyad">
   <input id="classroom" placeholder="Sınıf / Şube (5/A)">
   <button onclick="startGame()">Başla</button>
   <p id="msg"></p>
+  <div class="small">Başla dediğinde giriş kaydı Firebase’e düşer.</div>
 </div>
 
 <div class="card" id="game">
@@ -79,16 +55,23 @@ window.startGame = async () => {
     return;
   }
 
-  await addDoc(collection(db,"sessions"),{
-    name,
-    classroom,
-    createdAt: serverTimestamp()
-  });
+  document.getElementById("msg").innerText = "Kaydediliyor...";
 
-  document.getElementById("login").style.display="none";
-  document.getElementById("game").style.display="block";
+  try{
+    await addDoc(collection(db,"sessions"),{
+      name,
+      classroom,
+      createdAt: serverTimestamp(),
+      userAgent: navigator.userAgent
+    });
+
+    document.getElementById("login").style.display="none";
+    document.getElementById("game").style.display="block";
+  }catch(e){
+    console.error(e);
+    document.getElementById("msg").innerText = "Kayıt hatası. İnternet/Firebase kontrol edin.";
+  }
 };
 </script>
-
 </body>
 </html>
