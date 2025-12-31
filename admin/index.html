@@ -1,1 +1,145 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dokuz Taş - Öğretmen Paneli</title>
+<style>
+body{margin:0;font-family:Arial;background:#0b1020;color:#fff}
+.wrap{max-width:1100px;margin:30px auto;padding:12px}
+.card{background:#121a33;border:1px solid #2a3570;border-radius:12px;padding:14px;margin-bottom:12px}
+input,button{padding:12px;border-radius:10px;border:1px solid #2a3570;background:#0f1630;color:#fff}
+button{cursor:pointer;font-weight:700}
+.row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+table{width:100%;border-collapse:collapse}
+th,td{border-bottom:1px solid #24306a;padding:10px;text-align:left;font-size:13px}
+th{color:#e9edff}
+.small{opacity:.8;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card" id="loginCard">
+    <h2 style="margin:0 0 10px 0">Öğretmen Girişi</h2>
+    <div class="row">
+      <div>
+        <div class="small">E-posta</div>
+        <input id="email" placeholder="admin e-posta">
+      </div>
+      <div>
+        <div class="small">Şifre</div>
+        <input id="pass" type="password" placeholder="••••••••">
+      </div>
+      <button id="loginBtn">Giriş</button>
+    </div>
+    <div class="small" id="authMsg" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" id="panel" style="display:none">
+    <h2 style="margin:0 0 10px 0">Kim Girdi? (Canlı Liste)</h2>
+    <div class="row">
+      <div>
+        <div class="small">Sınıf filtresi (örn 5/A)</div>
+        <input id="filterClass" placeholder="Boş = hepsi">
+      </div>
+      <div>
+        <div class="small">İsim arama</div>
+        <input id="filterName" placeholder="Boş = hepsi">
+      </div>
+      <button id="logoutBtn">Çıkış</button>
+    </div>
+
+    <div class="small" style="margin-top:10px">Toplam: <b id="count">0</b></div>
+
+    <div style="overflow:auto;margin-top:10px">
+      <table>
+        <thead>
+          <tr>
+            <th>Tarih/Saat</th>
+            <th>Ad Soyad</th>
+            <th>Sınıf</th>
+            <th>Cihaz</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
+  authDomain: "oyun-3bfba.firebaseapp.com",
+  projectId: "oyun-3bfba",
+  storageBucket: "oyun-3bfba.firebasestorage.app",
+  messagingSenderId: "120738565998",
+  appId: "1:120738565998:web:81876d89cafa64a1207b7f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const $ = s => document.querySelector(s);
+let all = [];
+
+function fmt(ts){
+  if(!ts) return "-";
+  const d = ts.toDate();
+  return d.toLocaleString("tr-TR");
+}
+function render(){
+  const cls = $("#filterClass").value.trim().toLowerCase();
+  const name = $("#filterName").value.trim().toLowerCase();
+  const filtered = all.filter(x=>{
+    const okCls = !cls || (x.classroom||"").toLowerCase().includes(cls);
+    const okName = !name || (x.name||"").toLowerCase().includes(name);
+    return okCls && okName;
+  });
+  $("#count").textContent = filtered.length;
+  $("#rows").innerHTML = filtered.map(x=>`
+    <tr>
+      <td>${fmt(x.createdAt)}</td>
+      <td>${x.name||""}</td>
+      <td>${x.classroom||""}</td>
+      <td title="${(x.userAgent||"").replaceAll('"','&quot;')}">${(x.userAgent||"").slice(0,45)}${(x.userAgent||"").length>45?"…":""}</td>
+    </tr>
+  `).join("");
+}
+
+$("#filterClass").addEventListener("input", render);
+$("#filterName").addEventListener("input", render);
+
+$("#loginBtn").addEventListener("click", async ()=>{
+  $("#authMsg").textContent = "";
+  try{
+    await signInWithEmailAndPassword(auth, $("#email").value.trim(), $("#pass").value.trim());
+    $("#loginCard").style.display = "none";
+    $("#panel").style.display = "block";
+
+    const q = query(collection(db,"sessions"), orderBy("createdAt","desc"));
+    onSnapshot(q, (snap)=>{
+      all = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      render();
+    });
+  }catch(e){
+    console.error(e);
+    $("#authMsg").textContent = "Giriş başarısız. E-posta/şifre kontrol et.";
+  }
+});
+
+$("#logoutBtn").addEventListener("click", async ()=>{
+  await signOut(auth);
+  location.reload();
+});
+</script>
+</body>
+</html>
 
