@@ -4,6 +4,10 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Dokuz Taş - Resmî Kurallar (AI Rakip)</title>
+
+  <!-- ✅ Konfeti (GitHub Pages’te çalışır) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
   <style>
     :root { --bg:#0b1020; --panel:#121a33; --line:#93a4ff55; --text:#e9edff; --muted:#b9c2ff; }
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
@@ -38,18 +42,45 @@
     .pos:hover{ stroke:#6e84ff; }
     .pos.empty{ cursor:pointer; }
 
-    /* Renkler */
-    .stoneW{ fill:#f59e0b; stroke:#ffd08a; stroke-width:3; }  /* Sen: Turuncu */
-    .stoneB{ fill:#0b3a8a; stroke:#7aa2ff; stroke-width:3; }  /* AI: Lacivert */
+    /* ✅ RENKLER */
+    .stoneW{ fill:#f59e0b; stroke:#ffd08a; stroke-width:3; }   /* Sen: Turuncu */
+    .stoneB{ fill:#0b3a8a; stroke:#7aa2ff; stroke-width:3; }   /* AI: Lacivert */
 
-    /* Telefonda tıklama sorunu */
+    /* ✅ TELEFON DOKUNMA SORUNU ÇÖZÜMÜ */
     .stoneW, .stoneB { pointer-events: none; }
 
     .sel{ stroke:#ffd166; stroke-width:5; }
     .glow{ filter:url(#glow); }
     .divider{ height:1px; background:#24306a; margin:10px 0; }
+
+    /* ✅ Kaybedince sarsma */
+    .shake{ animation: shake 360ms ease-in-out; }
+    @keyframes shake{
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-7px); }
+      80% { transform: translateX(7px); }
+      100% { transform: translateX(0); }
+    }
+
+    /* ✅ Büyük sonuç yazısı */
+    .bigTitle{
+      font-size: clamp(40px, 8vw, 80px);
+      font-weight: 1000;
+      letter-spacing: 1px;
+      margin: 0 0 10px 0;
+      text-transform: uppercase;
+    }
+    .subLine{
+      font-size: clamp(16px, 2.8vw, 22px);
+      color: #c9d0ff;
+      margin: 0 0 18px 0;
+      line-height: 1.4;
+    }
   </style>
 </head>
+
 <body>
 <div class="wrap">
 
@@ -126,14 +157,31 @@
   </div>
 </div>
 
-<!-- ✅ Oyun Bitti Penceresi -->
-<div id="endOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); align-items:center; justify-content:center; z-index:9999;">
-  <div style="background:#121a33; border:1px solid #2a3570; border-radius:16px; padding:18px; width:min(92vw,420px);">
-    <div id="endTitle" style="font-size:18px; font-weight:800; color:#e9edff; margin-bottom:8px;">Oyun Bitti</div>
-    <div id="endText" style="color:#b9c2ff; line-height:1.4; margin-bottom:14px;"></div>
-    <div style="display:flex; gap:8px; justify-content:flex-end;">
-      <button id="endCloseBtn">Kapat</button>
-      <button id="endNewBtn">Yeni Oyun</button>
+<!-- ✅ TAM EKRAN SONUÇ (kocaman yazı) -->
+<div id="endOverlay" style="
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.82);
+  backdrop-filter: blur(8px);
+  align-items:center; justify-content:center;
+  z-index:999999;
+">
+  <div id="endBox" style="
+    background:#121a33;
+    border:2px solid #4052b6;
+    border-radius:26px;
+    padding:26px;
+    width:min(94vw,640px);
+    text-align:center;
+    box-shadow: 0 20px 80px rgba(0,0,0,.60);
+  ">
+    <div id="endIcon" style="font-size:64px; margin-bottom:8px;">🏁</div>
+    <div id="endTitle" class="bigTitle">OYUN BİTTİ</div>
+    <div id="endText" class="subLine"></div>
+
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+      <button id="endNewBtn" style="padding:14px 18px; border-radius:16px; font-size:16px;">Yeni Oyun</button>
+      <button id="endCloseBtn" style="padding:14px 18px; border-radius:16px; font-size:16px;">Kapat</button>
     </div>
   </div>
 </div>
@@ -157,15 +205,46 @@ const db = getFirestore(app);
 const $ = s => document.querySelector(s);
 const setLoginMsg = (t)=> $("#loginMsg").textContent = t;
 
+function hideEndOverlay(){
+  $("#endOverlay").style.display = "none";
+  $("#endBox").classList.remove("shake");
+}
 function showEndOverlay(winner){
   const won = winner === 'W';
-  $("#endTitle").textContent = "Oyun Bitti";
-  $("#endText").textContent = won
-    ? "Tebrikler! Kazandınız 🟠"
-    : "Oyun bitti. Rakip kazandı 🔵";
+
   $("#endOverlay").style.display = "flex";
+
+  if (won){
+    $("#endIcon").textContent  = "🏆";
+    $("#endTitle").textContent = "KAZANDIN!";
+    $("#endText").textContent  = "Tebrikler! Konfeti senin için patlıyor 🎉";
+  } else {
+    $("#endIcon").textContent  = "😔";
+    $("#endTitle").textContent = "KAYBETTİN";
+    $("#endText").textContent  = "Tekrar dene — bu sefer olacak 💪";
+    $("#endBox").classList.add("shake");
+  }
+
+  // ✅ Efektler
+  if (window.confetti){
+    if (won){
+      // büyük konfeti (3 dalga)
+      confetti({ particleCount: 240, spread: 100, origin: { y: 0.65 } });
+      setTimeout(()=> confetti({ particleCount: 180, spread: 130, origin: { y: 0.55 } }), 220);
+      setTimeout(()=> confetti({ particleCount: 140, spread: 160, origin: { y: 0.50 } }), 420);
+    } else {
+      // kaybedince hafif “yağmur” gibi sönük efekt
+      confetti({
+        particleCount: 80,
+        spread: 55,
+        startVelocity: 18,
+        gravity: 1.35,
+        origin: { x: 0.5, y: 0.18 }
+      });
+    }
+  }
 }
-function hideEndOverlay(){ $("#endOverlay").style.display = "none"; }
+
 document.addEventListener("click", (e)=>{
   if(e.target?.id === "endCloseBtn") hideEndOverlay();
   if(e.target?.id === "endNewBtn"){ hideEndOverlay(); newGame(); }
@@ -199,7 +278,7 @@ const positionsG = document.getElementById("positions");
 let lastAIMove = null;
 let lastBoardKeyB = null;
 
-/* ✅ Oyuncu anti-geri */
+/* ✅ Oyuncu anti-geri (A→B yaptıysan sonraki tur B→A yasak) */
 let lastHumanMove = null;
 function isReverseOfLastHuman(action){
   if(!lastHumanMove) return false;
@@ -551,7 +630,6 @@ function updateKPI(){
   $("#bOnBoard").textContent = countOnBoard(game.board,'B');
   $("#wPlaced").textContent = game.placed.W;
   $("#bPlaced").textContent = game.placed.B;
-
   const phase = (game.placed.W<9 || game.placed.B<9) ? "Taş koyma" : "Hareket";
   $("#phasePill").textContent = "Aşama: " + phase;
 }
@@ -614,6 +692,7 @@ function onClickPos(i){
   const phase = phaseOf(game,'W');
   const opp = 'B';
 
+  // Taş alma modu
   if(game.captureMode && game._temp){
     const {removable} = game._temp;
     if(b[i]!==opp) return;
@@ -624,11 +703,12 @@ function onClickPos(i){
     return;
   }
 
+  // Taş koyma
   if(phase==="placing"){
     if(b[i]!==null) return;
 
     const b2 = b.slice(); b2[i]='W';
-    const millMade = millsFormedBy(b2,'W',i).length>0;
+    const millMade = MILLS.some(m => m.includes(i) && m.every(idx => (idx===i ? 'W' : b2[idx]) === 'W'));
 
     if(!millMade){
       humanAction({type:'place', from:null, to:i, millMade:false, capture:null});
@@ -643,6 +723,7 @@ function onClickPos(i){
     return;
   }
 
+  // Taş seç
   if(b[i]==='W'){
     game.pendingMover = (game.pendingMover===i ? null : i);
     render();
@@ -655,11 +736,13 @@ function onClickPos(i){
     return;
   }
 
+  // Hedef (hareket/uçma)
   if(b[i]===null && game.pendingMover!==null){
     const from = game.pendingMover;
     const fly = canFly(game,'W');
     if(!fly && !ADJ[from].includes(i)) return;
 
+    // ✅ geri hamle engeli
     const candidate = { type:'move', from, to:i };
     if(isReverseOfLastHuman(candidate)){
       setStatus("Aynı hamleyi hemen geri alamazsın. Farklı bir hamle dene.");
@@ -668,7 +751,7 @@ function onClickPos(i){
 
     const b2 = b.slice();
     b2[from]=null; b2[i]='W';
-    const millMade = millsFormedBy(b2,'W',i).length>0;
+    const millMade = MILLS.some(m => m.includes(i) && m.every(idx => b2[idx] === 'W'));
 
     if(!millMade){
       game.pendingMover = null;
