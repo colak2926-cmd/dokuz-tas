@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Dokuz Taş - Resmî Kurallar (AI Rakip)</title>
   <style>
-    :root { --bg:#0b1020; --panel:#121a33; --line:#93a4ff55; --text:#e9edff; --muted:#b9c2ff; --accent:#7aa2ff; }
+    :root { --bg:#0b1020; --panel:#121a33; --line:#93a4ff55; --text:#e9edff; --muted:#b9c2ff; }
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
     .wrap{ display:flex; flex-direction:column; gap:12px; padding:14px; max-width:1040px; margin:0 auto; }
     .top{ display:flex; flex-wrap:wrap; gap:12px; align-items:stretch; }
@@ -37,8 +37,11 @@
     .pos{ fill:#0f1630; stroke:#2a3570; stroke-width:3; }
     .pos:hover{ stroke:#6e84ff; }
     .pos.empty{ cursor:pointer; }
-    .stoneW{ fill:#e9edff; stroke:#bfc8ff; stroke-width:3; }
-    .stoneB{ fill:#121a33; stroke:#7aa2ff; stroke-width:3; }
+
+    /* ✅ RENKLER: Sen = TURUNCU, AI = LACİVERT */
+    .stoneW{ fill:#f59e0b; stroke:#ffd08a; stroke-width:3; }     /* Turuncu */
+    .stoneB{ fill:#0b3a8a; stroke:#7aa2ff; stroke-width:3; }     /* Lacivert */
+
     .sel{ stroke:#ffd166; stroke-width:5; }
     .glow{ filter:url(#glow); }
     .divider{ height:1px; background:#24306a; margin:10px 0; }
@@ -91,8 +94,8 @@
     <div class="card infoCard">
       <h1>Dokuz Taş (Resmî) – Tek Cihaz / AI Rakip</h1>
       <div class="row">
-        <span class="pill">Sen: Beyaz</span>
-        <span class="pill">Rakip: Siyah (AI)</span>
+        <span class="pill">Sen: Turuncu</span>
+        <span class="pill">Rakip: Lacivert (AI)</span>
         <span class="pill" id="phasePill">Aşama: Taş koyma</span>
       </div>
 
@@ -257,17 +260,19 @@ function hasAnyLegalMove(state, p){
   return false;
 }
 
+/* ✅ KRİTİK DÜZELTME: Taş dizme bitince oyun BİTMEYECEK, hareket başlayacak */
 function checkWinner(state){
+  if (state.placed.W < 9 || state.placed.B < 9) return null;
+
   const wCount = countOnBoard(state.board,'W');
   const bCount = countOnBoard(state.board,'B');
-  // Taşlar bittiyse ama hamle yapılabiliyorsa oyun devam etmeli
-if (state.placed.W >= 9 && hasAnyLegalMove(state,'W')) {
+
+  if (wCount < 3 || !hasAnyLegalMove(state,'W')) return 'B';
+  if (bCount < 3 || !hasAnyLegalMove(state,'B')) return 'W';
+
   return null;
 }
-  if(state.placed.W>=9 && (wCount<3 || !hasAnyLegalMove(state,'W'))) return 'B';
-  if(state.placed.B>=9 && (bCount<3 || !hasAnyLegalMove(state,'B'))) return 'W';
-  return null;
-}
+
 /* ====== AI: hareket üretme + minimax ====== */
 function generateActions(state, p){
   const opp = p==='W' ? 'B' : 'W';
@@ -443,7 +448,11 @@ function aiMove(){
     if(game.winner){
       setStatus("Oyun bitti. Kazanan: " + (game.winner==='W' ? "Sen" : "AI"));
     }else{
-      setStatus(action.millMade ? "AI değirmen yaptı ve 1 taşını kaldırdı. Sıra sende." : "AI hamle yaptı. Sıra sende.");
+      if (game.placed.W>=9 && game.placed.B>=9) {
+        setStatus(action.millMade ? "AI değirmen yaptı ve 1 taşını kaldırdı. Hareket sırası sende." : "AI hamle yaptı. Hareket sırası sende.");
+      } else {
+        setStatus(action.millMade ? "AI değirmen yaptı ve 1 taşını kaldırdı. Sıra sende." : "AI hamle yaptı. Sıra sende.");
+      }
     }
   }, 140);
 }
@@ -459,10 +468,6 @@ function updateKPI(){
 
   const phase = (game.placed.W<9 || game.placed.B<9) ? "Taş koyma" : "Hareket";
   $("#phasePill").textContent = "Aşama: " + phase;
-  // Taş koyma bittiyse oyun hareket aşamasına geçer
-if (game.placed.W >= 9 && game.placed.B >= 9) {
-  setStatus("Taş koyma bitti. Artık taşlarını hareket ettirebilirsin.");
-}
 }
 
 function render(){
@@ -505,6 +510,9 @@ function humanAction(action){
   if(game.winner){
     setStatus("Oyun bitti. Kazanan: " + (game.winner==='W' ? "Sen" : "AI"));
     return;
+  }
+  if (game.placed.W>=9 && game.placed.B>=9) {
+    setStatus("Taş koyma bitti. Artık taşlarını hareket ettirebilirsin.");
   }
   aiMove();
 }
@@ -635,7 +643,6 @@ $("#startBtn").addEventListener("click", async ()=>{
       userAgent: navigator.userAgent
     });
 
-    // kayıt tamam → oyun
     document.getElementById("loginCard").style.display = "none";
     document.getElementById("gameUI").style.display = "flex";
     newGame();
