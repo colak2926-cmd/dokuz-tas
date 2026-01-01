@@ -3,84 +3,130 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Dokuz Taş | Resmî (AI + Online)</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
+  <title>Dokuz Taş – AI / Online (Realtime)</title>
   <style>
-    :root{--bg:#0b1020;--panel:#121a33;--line:#93a4ff55;--text:#e9edff;--muted:#b9c2ff;--b:#2a3570}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-    .wrap{max-width:1120px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:12px}
-    .top{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
-    .card{background:var(--panel);border:1px solid var(--b);border-radius:14px;padding:12px}
-    .boardCard{flex:1 1 580px;display:flex;align-items:center;justify-content:center}
-    .infoCard{flex:1 1 360px;min-width:320px}
-    h1{font-size:18px;margin:0 0 8px 0;font-weight:1000}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    button{border:1px solid var(--b);background:#0f1630;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:900}
-    button:hover{border-color:#4052b6}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    input{width:100%;box-sizing:border-box;border:1px solid var(--b);background:#0f1630;color:var(--text);padding:12px;border-radius:12px}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0f1630;border:1px solid var(--b);color:var(--muted);font-size:12px}
-    .status{margin-top:10px;line-height:1.35;color:var(--muted);min-height:52px;white-space:pre-line}
-    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-    .kpi div{background:#0f1630;border:1px solid var(--b);border-radius:12px;padding:10px;font-size:13px;color:var(--muted)}
-    .kpi b{color:var(--text)}
-    .small{font-size:12px;color:var(--muted)}
-    .divider{height:1px;background:#24306a;margin:10px 0}
+    :root{
+      --bg:#0b1020; --panel:#121a33; --line:#93a4ff55; --text:#e9edff; --muted:#b9c2ff;
+      --btn:#0f1630; --btnb:#2a3570; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    .wrap{max-width:1100px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:12px;}
+    .card{background:var(--panel);border:1px solid var(--btnb);border-radius:14px;padding:12px;}
+    h1{margin:0 0 8px 0;font-size:18px;font-weight:850;}
+    .small{font-size:12px;color:var(--muted);}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    button{
+      border:1px solid var(--btnb);background:var(--btn);color:var(--text);
+      padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:800;
+    }
+    button:hover{border-color:#4052b6;}
+    button:disabled{opacity:.55;cursor:not-allowed;}
+    input{
+      width:100%;box-sizing:border-box;border:1px solid var(--btnb);background:var(--btn);color:var(--text);
+      padding:12px;border-radius:12px;
+    }
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--btn);border:1px solid var(--btnb);color:var(--muted);font-size:12px;}
+    .status{min-height:44px;color:var(--muted);line-height:1.35;margin-top:8px;}
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+    .kpi > div{background:var(--btn);border:1px solid var(--btnb);border-radius:12px;padding:10px;font-size:13px;color:var(--muted);}
+    .kpi b{color:var(--text);}
+    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;}
+    .boardCard{flex:1 1 620px;display:flex;justify-content:center;align-items:center;}
+    .infoCard{flex:1 1 360px;min-width:320px;}
+    svg{width:min(92vw,640px);height:auto;}
+    .line{stroke:var(--line);stroke-width:8;stroke-linecap:round;}
+    .pos{fill:var(--btn);stroke:var(--btnb);stroke-width:3;}
+    .pos.empty{cursor:pointer;}
+    .pos:hover{stroke:#6e84ff;}
+    .stoneW{fill:#f59e0b;stroke:#ffd08a;stroke-width:3;} /* Turuncu */
+    .stoneB{fill:#0b3a8a;stroke:#7aa2ff;stroke-width:3;} /* Lacivert */
+    .stoneW,.stoneB{pointer-events:none;} /* telefonda tıklama sorunu */
+    .sel{stroke:#ffd166;stroke-width:5;}
+    .glow{filter:url(#glow);}
+    .divider{height:1px;background:#24306a;margin:10px 0;}
+    .badgeOk{color:#052e16;background:#22c55e22;border:1px solid #22c55e55;}
+    .badgeBad{color:#450a0a;background:#ef444422;border:1px solid #ef444455;}
+    .badgeWarn{color:#3a1d00;background:#f59e0b22;border:1px solid #f59e0b55;}
 
-    svg{width:min(90vw,640px);height:auto}
-    .line{stroke:var(--line);stroke-width:8;stroke-linecap:round}
-    .pos{fill:#0f1630;stroke:var(--b);stroke-width:3}
-    .pos.empty{cursor:pointer}
-    .pos:hover{stroke:#6e84ff}
-    .stoneW{fill:#f59e0b;stroke:#ffd08a;stroke-width:3}
-    .stoneB{fill:#0b3a8a;stroke:#7aa2ff;stroke-width:3}
-    .stoneW,.stoneB{pointer-events:none}
-    .sel{stroke:#ffd166;stroke-width:5}
-    .glow{filter:url(#glow)}
-
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;z-index:99999}
-    .overlayBox{width:min(94vw,720px);border-radius:26px;padding:26px;border:2px solid #4052b6;background:#121a33;text-align:center;box-shadow:0 20px 80px rgba(0,0,0,.6)}
-    .bigTitle{font-size:clamp(40px,8vw,86px);font-weight:1000;letter-spacing:1px;margin:0 0 10px 0;text-transform:uppercase}
-    .subLine{font-size:clamp(16px,2.8vw,22px);color:#c9d0ff;margin:0 0 18px 0;line-height:1.4}
-    .endIcon{font-size:64px;margin-bottom:8px}
+    /* Modal (Kazandın/Kaybettin) */
+    .modalBack{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50;}
+    .modal{width:min(92vw,520px);background:var(--panel);border:1px solid var(--btnb);border-radius:16px;padding:14px;box-shadow:0 20px 60px #0007;}
+    .modal h2{margin:0 0 6px 0;font-size:22px;}
+    .modal p{margin:0;color:var(--muted);line-height:1.35;}
+    .modal .actions{margin-top:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+    #confetti{position:fixed;inset:0;pointer-events:none;display:none;z-index:60;}
+    .codeBox{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;background:#0a0f24;border:1px solid #2a3570;border-radius:12px;padding:10px;}
   </style>
 </head>
-
 <body>
+<canvas id="confetti"></canvas>
+
+<div class="modalBack" id="modalBack">
+  <div class="modal">
+    <h2 id="modalTitle">Oyun Bitti</h2>
+    <p id="modalText">Sonuç</p>
+    <div class="actions">
+      <button id="modalNewBtn">Tekrar Dene</button>
+      <button id="modalCloseBtn">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <div class="card" id="loginCard">
     <h1>Dokuz Taş – Giriş</h1>
-    <div class="small">AI veya Online Oda seçilebilir. Online’da Host=Turuncu, Guest=Lacivert.</div>
+    <div class="small">AI veya Online seçebilirsin. Online’da: Host = Turuncu, Guest = Lacivert.</div>
     <div style="height:10px"></div>
-
-    <label class="small">Ad Soyad</label>
-    <input id="name" placeholder="Örn: Ayşe Yılmaz" autocomplete="name"/>
-    <div style="height:10px"></div>
-
-    <label class="small">Sınıf / Şube</label>
-    <input id="classroom" placeholder="Örn: 5/A"/>
-    <div style="height:12px"></div>
-
-    <div class="row">
-      <button id="startAI" type="button">Bilgisayara Karşı (AI)</button>
-      <button id="toggleOnline" type="button">Online Rakip</button>
-    </div>
-
-    <div id="onlinePanel" style="display:none; margin-top:12px;">
-      <div class="divider"></div>
-      <div class="row">
-        <button id="createRoom" type="button">Oda Oluştur</button>
-        <button id="joinRoomBtn" type="button">Koda Katıl</button>
+    <div class="grid2">
+      <div>
+        <label class="small">Ad Soyad</label>
+        <input id="name" placeholder="Örn: Ayşe Yılmaz" autocomplete="name"/>
       </div>
-      <div style="height:10px"></div>
-      <label class="small">Oda Kodu</label>
-      <input id="roomCode" placeholder="Örn: AB12CD" style="text-transform:uppercase"/>
-      <div class="status" id="loginMsg"></div>
+      <div>
+        <label class="small">Sınıf / Şube</label>
+        <input id="classroom" placeholder="Örn: 5/A"/>
+      </div>
     </div>
 
-    <div class="status" id="loginMsgMain"></div>
+    <div style="height:10px"></div>
+    <div class="row">
+      <button id="aiBtn">Bilgisayara Karşı (AI)</button>
+      <button id="onlineBtn">Online Rakip</button>
+    </div>
+
+    <div id="onlinePanel" style="display:none;margin-top:10px">
+      <div class="divider"></div>
+      <div class="grid2">
+        <div class="card" style="margin:0;background:#0f1630;">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <b>Oda Oluştur (Host)</b>
+            <span class="pill badgeOk">Turuncu</span>
+          </div>
+          <div style="height:8px"></div>
+          <button id="createRoomBtn">Oda Oluştur</button>
+          <div style="height:8px"></div>
+          <div class="small">Oda Kodu:</div>
+          <div class="codeBox" id="roomCodeBox">—</div>
+          <div class="small" style="margin-top:8px">Bu kodu rakibe gönder.</div>
+        </div>
+
+        <div class="card" style="margin:0;background:#0f1630;">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <b>Odaya Katıl (Guest)</b>
+            <span class="pill badgeWarn">Lacivert</span>
+          </div>
+          <div style="height:8px"></div>
+          <label class="small">Oda Kodu</label>
+          <input id="joinCode" placeholder="Örn: 4RQZQX" style="text-transform:uppercase"/>
+          <div style="height:8px"></div>
+          <button id="joinRoomBtn">Koda Katıl</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="status" id="loginMsg"></div>
   </div>
 
   <div class="top" id="gameUI" style="display:none">
@@ -107,18 +153,12 @@
     </div>
 
     <div class="card infoCard">
-      <h1>Durum Paneli</h1>
-
-      <div class="row" style="margin-bottom:6px;">
-        <span class="pill" id="modePill">Mod: -</span>
-        <span class="pill" id="youPill">Sen: -</span>
-        <span class="pill" id="roomPill" style="display:none;">Oda: -</span>
-      </div>
-
+      <h1>Dokuz Taş – Gerçek Kurallar</h1>
       <div class="row">
-        <span class="pill">Turuncu (W)</span>
-        <span class="pill">Lacivert (B)</span>
-        <span class="pill" id="phasePill">Aşama: Taş koyma</span>
+        <span class="pill">Turuncu: Host / Sen</span>
+        <span class="pill">Lacivert: Guest / Rakip</span>
+        <span class="pill" id="modePill">Mod: —</span>
+        <span class="pill" id="phasePill">Aşama: —</span>
       </div>
 
       <div class="kpi">
@@ -129,102 +169,73 @@
       <div class="status" id="status"></div>
 
       <div class="row" style="margin-top:10px;">
-        <button id="newBtn" type="button">Yeni Oyun</button>
-        <button id="undoBtn" type="button">Geri Al</button>
-        <button id="hintBtn" type="button">İpucu</button>
-        <button id="leaveBtn" type="button">Çık</button>
+        <button id="newBtn">Yeni Oyun</button>
+        <button id="undoBtn">Geri Al</button>
+        <button id="hintBtn">İpucu</button>
       </div>
 
       <div class="divider"></div>
 
       <div class="small">
-        Online’da <b>geri al</b> ve <b>ipucu</b> kapalıdır.<br/>
-        Değirmen olursa önce hamle tahtaya düşer, sonra “Taş al” aşaması başlar.
+        <b>Kısa kullanım:</b>
+        <ul style="margin:6px 0 0 18px;padding:0;">
+          <li><b>Taş koyma:</b> boş noktaya dokun.</li>
+          <li><b>Hareket:</b> kendi taşına dokun → komşu boş noktaya dokun.</li>
+          <li><b>Uçma:</b> 3 taş kalınca istediğin boş noktaya gidebilirsin.</li>
+          <li><b>Değirmen:</b> 3’lü yapınca rakipten 1 taş kaldırırsın (mümkünse değirmende olmayan).</li>
+        </ul>
       </div>
-    </div>
-  </div>
-</div>
 
-<div class="overlay" id="endOverlay">
-  <div class="overlayBox">
-    <div class="endIcon" id="endIcon">🏁</div>
-    <div class="bigTitle" id="endTitle">OYUN BİTTİ</div>
-    <div class="subLine" id="endText"></div>
-    <div class="row" style="justify-content:center;">
-      <button id="endNewBtn" type="button">Yeni Oyun</button>
-      <button id="endCloseBtn" type="button">Kapat</button>
+      <div class="divider"></div>
+      <div class="small" id="roomInfo" style="display:none"></div>
     </div>
   </div>
 </div>
 
 <script type="module">
-/* =========================================================
-   ✅ KRİTİK DÜZELTME:
-   Firebase/Firestore sayfa açılırken import edilmiyor.
-   Sadece Online seçilince dinamik import ediliyor.
-   Böylece AI butonu her koşulda çalışır.
-========================================================= */
+/* =========================
+   FIREBASE REALTIME (Online)
+========================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getDatabase, ref, set, get, update, onValue, off, runTransaction, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
+/* 🔧 Firebase config (senin proje) */
+const firebaseConfig = {
+  apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
+  authDomain: "oyun-3bfba.firebaseapp.com",
+  projectId: "oyun-3bfba",
+  /* ✅ Realtime için en kritik satır: */
+  databaseURL: "https://oyun-3bfba-default-rtdb.firebaseio.com",
+  storageBucket: "oyun-3bfba.firebasestorage.app",
+  messagingSenderId: "120738565998",
+  appId: "1:120738565998:web:81876d89cafa64a1207b7f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+/* =========================
+   Yardımcılar
+========================= */
 const $ = s => document.querySelector(s);
-const setLoginMsg = t => $("#loginMsg").textContent = t;
-const setLoginMsgMain = t => $("#loginMsgMain").textContent = t;
-const setStatus = t => $("#status").textContent = t;
+const show = (el, v=true)=> el.style.display = v ? "" : "none";
+const setLoginMsg = (t)=> $("#loginMsg").textContent = t;
+const setStatus   = (t)=> $("#status").textContent = t;
 
-function profileOK(){
-  const name = $("#name").value.trim();
-  const classroom = $("#classroom").value.trim();
-  if(!name || !classroom){
-    setLoginMsgMain("Ad Soyad ve Sınıf/Şube zorunlu.");
-    return false;
+function randInt(n){
+  if(window.crypto && crypto.getRandomValues){
+    const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n;
   }
-  setLoginMsgMain("");
-  return true;
+  return Math.floor(Math.random()*n);
 }
+function pickRandom(arr){ return arr[randInt(arr.length)] }
 
-function openGameUI(){
-  $("#loginCard").style.display="none";
-  $("#gameUI").style.display="flex";
-  hideEndOverlay();
-}
-function openLoginUI(){
-  $("#loginCard").style.display="block";
-  $("#gameUI").style.display="none";
-  hideEndOverlay();
-}
-
-/* ================= Overlay ================= */
-function hideEndOverlay(){ $("#endOverlay").style.display="none"; }
-function showEndOverlay(winner){
-  const mySide = (MODE==="ONLINE" ? ROLE : "W");
-  $("#endOverlay").style.display="flex";
-
-  const won = (winner === mySide);
-  if(winner==="DRAW"){
-    $("#endIcon").textContent="🤝";
-    $("#endTitle").textContent="BERABERE";
-    $("#endText").textContent="Oyun bitti.";
-    return;
-  }
-
-  if(won){
-    $("#endIcon").textContent="🏆";
-    $("#endTitle").textContent="KAZANDIN!";
-    $("#endText").textContent="Tebrikler 🎉";
-    if(window.confetti){
-      confetti({ particleCount: 240, spread: 120, origin:{y:0.65} });
-      setTimeout(()=>confetti({ particleCount: 180, spread: 140, origin:{y:0.55} }), 220);
-      setTimeout(()=>confetti({ particleCount: 140, spread: 160, origin:{y:0.50} }), 440);
-    }
-  }else{
-    $("#endIcon").textContent="😔";
-    $("#endTitle").textContent="KAYBETTİN";
-    $("#endText").textContent="Tekrar dene — bu sefer olacak.";
-  }
-}
-$("#endCloseBtn").addEventListener("click", hideEndOverlay);
-
-/* ================= Board Data ================= */
-const POS=[
+/* =========================
+   Tahta Tanımları
+========================= */
+const POS = [
   [100,100],[500,100],[900,100],
   [250,250],[500,250],[750,250],
   [400,400],[500,400],[600,400],
@@ -233,392 +244,742 @@ const POS=[
   [250,750],[500,750],[750,750],
   [100,900],[500,900],[900,900]
 ];
-const ADJ=[
+
+const ADJ = [
   [1,9],[0,2,4],[1,14],[4,10],[1,3,5,7],[4,13],[7,11],[4,6,8],[7,12],
   [0,10,21],[3,9,11,18],[6,10,15],[8,13,17],[5,12,14,20],[2,13,23],
   [11,16],[15,17,19],[12,16],[10,19],[16,18,20,22],[13,19],[9,22],[19,21,23],[14,22]
 ];
-const MILLS=[
+
+const MILLS = [
   [0,1,2],[3,4,5],[6,7,8],[9,10,11],[12,13,14],[15,16,17],[18,19,20],[21,22,23],
   [0,9,21],[3,10,18],[6,11,15],[1,4,7],[16,19,22],[8,12,17],[5,13,20],[2,14,23]
 ];
-const positionsG = document.getElementById("positions");
 
-/* ================= Game State ================= */
-let MODE=null;     // "AI" | "ONLINE"
-let ROLE="W";
-let ROOM=null;
+function countOnBoard(board,p){ return board.filter(x=>x===p).length; }
+function phaseOf(state,p){ return state.placed[p] < 9 ? "placing" : "moving"; }
+function canFly(state,p){ return phaseOf(state,p)==="moving" && countOnBoard(state.board,p) <= 3; }
 
-let game=freshState();
-let history=[];
-let lastHumanMove=null;
-
-function freshState(){
-  return {board:Array(24).fill(null),turn:"W",placed:{W:0,B:0},pendingMover:null,capture:null,winner:null};
+function millsFormedBy(board,p,posIndex){
+  return MILLS.filter(m => m.includes(posIndex) && m.every(i=>board[i]===p));
 }
-function countOnBoard(board,p){return board.filter(x=>x===p).length;}
-function phaseOf(state,p){return state.placed[p]<9?"placing":"moving";}
-function canFly(state,p){return phaseOf(state,p)==="moving" && countOnBoard(state.board,p)===3;}
-function millsFormedBy(board,p,pos){return MILLS.filter(m=>m.includes(pos)&&m.every(i=>board[i]===p));}
-function isInAnyMill(board,p,idx){return MILLS.some(m=>m.includes(idx)&&m.every(i=>board[i]===p));}
-function removableOpponentStones(board,opp){
-  const idx=board.map((v,i)=>v===opp?i:-1).filter(i=>i>=0);
-  const notMill=idx.filter(i=>!isInAnyMill(board,opp,i));
-  return notMill.length?notMill:idx;
+function isInAnyMill(board,p,idx){
+  return MILLS.some(m => m.includes(idx) && m.every(i=>board[i]===p));
+}
+function removableOpponentStones(board, opp){
+  const idx = board.map((v,i)=> v===opp ? i : -1).filter(i=>i>=0);
+  const notInMill = idx.filter(i => !isInAnyMill(board, opp, i));
+  return notInMill.length ? notInMill : idx;
 }
 function hasAnyLegalMove(state,p){
-  const b=state.board;
+  const b = state.board;
   if(phaseOf(state,p)==="placing") return b.some(x=>x===null);
-  const fly=canFly(state,p);
-  const my=b.map((v,i)=>v===p?i:-1).filter(i=>i>=0);
+  const fly = canFly(state,p);
+  const my = b.map((v,i)=> v===p ? i : -1).filter(i=>i>=0);
   if(fly) return b.some(x=>x===null) && my.length>0;
-  for(const from of my){ if(ADJ[from].some(to=>b[to]===null)) return true; }
+  for(const from of my){
+    if(ADJ[from].some(to=>b[to]===null)) return true;
+  }
   return false;
 }
 function checkWinner(state){
-  if(state.placed.W<9||state.placed.B<9) return null;
-  const w=countOnBoard(state.board,"W");
-  const b=countOnBoard(state.board,"B");
-  if(w<3||!hasAnyLegalMove(state,"W")) return "B";
-  if(b<3||!hasAnyLegalMove(state,"B")) return "W";
+  if(state.placed.W < 9 || state.placed.B < 9) return null; // sadece yerleştirme bitince
+  const w = countOnBoard(state.board,'W');
+  const b = countOnBoard(state.board,'B');
+  if(w < 3 || !hasAnyLegalMove(state,'W')) return 'B';
+  if(b < 3 || !hasAnyLegalMove(state,'B')) return 'W';
   return null;
 }
 
-function applyAction(state,p,action){
-  const opp=(p==="W")?"B":"W";
-  const s=JSON.parse(JSON.stringify(state));
-  const b=s.board;
-  if(s.winner) return s;
+/* =========================
+   Oyun Durumu (AI / Local)
+========================= */
+let mode = null; // 'AI' | 'ONLINE'
+let role = null; // ONLINE: 'W' host turuncu, 'B' guest lacivert
+let roomCode = null;
+let roomUnsub = null;
 
-  if(s.capture){
-    if(action.type!=="capture") throw new Error("Taş almalısın");
-    if(s.capture.by!==p) throw new Error("Taşı sen alamazsın");
-    if(b[action.at]!==opp) throw new Error("Rakip taşı değil");
-    if(!s.capture.removable.includes(action.at)) throw new Error("Bu taşı alamazsın");
-    b[action.at]=null;
-    s.capture=null;
-    s.turn=opp;
-    s.winner=checkWinner(s);
-    return s;
-  }
+let game, history = [];
+let pendingMover = null;
+let captureModeLocal = false; // local UI için (online capture state shared olacak)
+let tempAction = null;
 
-  const myPhase=phaseOf(s,p);
-
-  if(action.type==="place"){
-    if(myPhase!=="placing") throw new Error("Taş koyma bitti");
-    if(b[action.to]!==null) throw new Error("Dolu");
-    b[action.to]=p; s.placed[p]+=1;
-
-    const mill=millsFormedBy(b,p,action.to).length>0;
-    if(mill){
-      s.capture={by:p,removable:removableOpponentStones(b,opp)};
-      s.turn=p;
-    }else s.turn=opp;
-
-    s.winner=checkWinner(s);
-    return s;
-  }
-
-  if(action.type==="move"){
-    if(myPhase!=="moving") throw new Error("Önce taşlar dizilmeli");
-    if(b[action.from]!==p) throw new Error("Kendi taşı değil");
-    if(b[action.to]!==null) throw new Error("Hedef dolu");
-    const fly=canFly(s,p);
-    if(!fly && !ADJ[action.from].includes(action.to)) throw new Error("Komşu değil");
-
-    b[action.from]=null; b[action.to]=p;
-    const mill=millsFormedBy(b,p,action.to).length>0;
-    if(mill){
-      s.capture={by:p,removable:removableOpponentStones(b,opp)};
-      s.turn=p;
-    }else s.turn=opp;
-
-    s.winner=checkWinner(s);
-    return s;
-  }
-
-  throw new Error("Geçersiz hamle");
+function baseGame(){
+  return {
+    board: Array(24).fill(null),
+    placed: {W:0, B:0},
+    turn: 'W',
+    captureBy: null, // 'W' or 'B' -> değirmen sonrası taş alma
+    winner: null,
+    moveSeq: 0,
+    lastMsg: ""
+  };
 }
 
-/* ================= UI Render ================= */
+function pushHistory(){
+  history.push(JSON.parse(JSON.stringify(game)));
+  $("#undoBtn").disabled = history.length <= 1;
+}
+function newLocalGame(){
+  game = baseGame();
+  history = [];
+  pendingMover = null;
+  captureModeLocal = false;
+  tempAction = null;
+  pushHistory();
+  render();
+  setStatus("Sıra Turuncu’da. Boş bir noktaya taş koy.");
+}
+
+/* =========================
+   Basit Confetti
+========================= */
+const conf = $("#confetti");
+const ctx  = conf.getContext("2d");
+let confettiOn = false;
+let particles = [];
+
+function resizeConf(){ conf.width = innerWidth; conf.height = innerHeight; }
+addEventListener("resize", resizeConf); resizeConf();
+
+function startConfetti(){
+  conf.style.display = "block";
+  confettiOn = true;
+  particles = Array.from({length:180}).map(()=>({
+    x: Math.random()*conf.width,
+    y: -20 - Math.random()*conf.height*0.2,
+    vx:(Math.random()*2-1)*2.2,
+    vy: 2 + Math.random()*4,
+    r: 3 + Math.random()*4,
+    a: Math.random()*Math.PI*2,
+    va:(Math.random()*2-1)*0.2
+  }));
+  requestAnimationFrame(tickConfetti);
+  setTimeout(stopConfetti, 2200);
+}
+function stopConfetti(){
+  confettiOn = false;
+  conf.style.display = "none";
+}
+function tickConfetti(){
+  if(!confettiOn) return;
+  ctx.clearRect(0,0,conf.width,conf.height);
+  for(const p of particles){
+    p.x += p.vx; p.y += p.vy; p.a += p.va;
+    if(p.y > conf.height+30){ p.y = -20; p.x = Math.random()*conf.width; }
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(p.a);
+    ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+    ctx.restore();
+  }
+  requestAnimationFrame(tickConfetti);
+}
+
+/* =========================
+   Modal (kazandın/kaybettin)
+========================= */
+function openModal(title, text, confetti=false){
+  $("#modalTitle").textContent = title;
+  $("#modalText").textContent  = text;
+  $("#modalBack").style.display = "flex";
+  if(confetti) startConfetti();
+}
+function closeModal(){ $("#modalBack").style.display = "none"; stopConfetti(); }
+
+$("#modalCloseBtn").addEventListener("click", closeModal);
+$("#modalNewBtn").addEventListener("click", ()=>{
+  closeModal();
+  if(mode==="AI"){ newLocalGame(); }
+  else if(mode==="ONLINE"){ resetOnlineGame(); }
+});
+
+/* =========================
+   Render
+========================= */
+const positionsG = $("#positions");
+
 function updateKPI(){
-  $("#wOnBoard").textContent=countOnBoard(game.board,"W");
-  $("#bOnBoard").textContent=countOnBoard(game.board,"B");
-  $("#wPlaced").textContent=game.placed.W;
-  $("#bPlaced").textContent=game.placed.B;
-  $("#phasePill").textContent="Aşama: "+((game.placed.W<9||game.placed.B<9)?"Taş koyma":"Hareket");
+  $("#wOnBoard").textContent = countOnBoard(game.board,'W');
+  $("#bOnBoard").textContent = countOnBoard(game.board,'B');
+  $("#wPlaced").textContent  = game.placed.W;
+  $("#bPlaced").textContent  = game.placed.B;
 
-  $("#modePill").textContent="Mod: "+(MODE==="AI"?"Bilgisayar":"Online");
-  if(MODE==="AI"){
-    $("#youPill").textContent="Sen: Turuncu (W)";
-    $("#roomPill").style.display="none";
-  }else{
-    $("#youPill").textContent=(ROLE==="W"?"Sen: Turuncu (Host)":"Sen: Lacivert (Guest)");
-    $("#roomPill").style.display="inline-block";
-    $("#roomPill").textContent="Oda: "+ROOM;
-  }
+  const phase = (game.placed.W<9 || game.placed.B<9) ? "Taş koyma" : "Hareket";
+  $("#phasePill").textContent = "Aşama: " + phase;
+
+  if(mode==="AI") $("#modePill").textContent = "Mod: AI";
+  if(mode==="ONLINE") $("#modePill").textContent = "Mod: Online (" + (role==='W' ? "Host/Turuncu" : "Guest/Lacivert") + ")";
 }
-function render(){
-  positionsG.innerHTML="";
-  for(let i=0;i<24;i++){
-    const [x,y]=POS[i];
-    const v=game.board[i];
-    const g=document.createElementNS("http://www.w3.org/2000/svg","g");
 
-    const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",26);
+function render(){
+  positionsG.innerHTML = "";
+  for(let i=0;i<24;i++){
+    const [x,y] = POS[i];
+    const v = game.board[i];
+
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx", x); c.setAttribute("cy", y);
+    c.setAttribute("r", 26);
     c.classList.add("pos");
     if(v===null) c.classList.add("empty");
-    if(game.pendingMover===i) c.classList.add("sel","glow");
-    c.addEventListener("click",()=>onClickPos(i));
+    if(pendingMover===i) c.classList.add("sel","glow");
+    c.addEventListener("click", ()=> onClickPos(i));
     g.appendChild(c);
 
     if(v!==null){
-      const s=document.createElementNS("http://www.w3.org/2000/svg","circle");
-      s.setAttribute("cx",x); s.setAttribute("cy",y); s.setAttribute("r",18);
-      s.classList.add(v==="W"?"stoneW":"stoneB");
+      const s = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      s.setAttribute("cx", x); s.setAttribute("cy", y);
+      s.setAttribute("r", 18);
+      s.classList.add(v==='W' ? "stoneW" : "stoneB");
       s.classList.add("glow");
       g.appendChild(s);
     }
     positionsG.appendChild(g);
   }
 
+  $("#undoBtn").disabled = (mode!=="AI") || (history.length<=1);
+  $("#hintBtn").disabled = (mode!=="AI") || !!game.winner || (game.turn!=='W');
   updateKPI();
-  $("#hintBtn").disabled=(MODE!=="AI") || !!game.winner;
-  $("#undoBtn").disabled=(MODE!=="AI") || (history.length<=1);
-}
-function setTurnText(){
-  if(game.winner){ setStatus("Oyun bitti."); return; }
-  if(game.capture){
-    setStatus((game.capture.by==="W"?"Turuncu":"Lacivert")+" değirmen yaptı. 1 taş alınmalı.");
-    return;
-  }
-  if(MODE==="AI"){
-    setStatus(game.turn==="W"?"Sıra sende.":"AI oynuyor...");
-  }else{
-    setStatus((game.turn==="W"?"Turuncu":"Lacivert")+" sırası.");
-  }
 }
 
-/* ================= Click Logic (AI) ================= */
-function doActionAI(action){
-  try{
-    const before=JSON.parse(JSON.stringify(game));
-    game=applyAction(game,"W",action);
-
-    if(action.type==="move") lastHumanMove={from:action.from,to:action.to};
-    else lastHumanMove=null;
-
-    history.push(before);
-    render();
-
-    if(game.winner){ showEndOverlay(game.winner); return; }
-    if(game.capture && game.capture.by==="W"){ setStatus("Değirmen! 1 taş al."); return; }
-
-    // AI hamlesi (basit)
-    aiStep();
-  }catch(e){
-    setStatus("Hamle olmadı: "+(e?.message||e));
-  }
-}
-
+/* =========================
+   AI (basit minimax aynı mantık)
+========================= */
 function generateActions(state,p){
-  const actions=[];
-  if(state.capture){
-    if(state.capture.by!==p) return actions;
-    for(const at of state.capture.removable) actions.push({type:"capture",at});
-    return actions;
-  }
-  const b=state.board;
-  const phase=phaseOf(state,p);
+  const opp = p==='W' ? 'B' : 'W';
+  const actions = [];
+  const board = state.board;
+  const phase = phaseOf(state,p);
+
+  const addCaps = (b2, base)=>{
+    if(!base.millMade){ actions.push({...base, capture:null}); return; }
+    const rem = removableOpponentStones(b2, opp);
+    for(const cap of rem) actions.push({...base, capture:cap});
+  };
+
   if(phase==="placing"){
-    for(let to=0;to<24;to++) if(b[to]===null) actions.push({type:"place",to});
+    for(let to=0;to<24;to++){
+      if(board[to]!=null) continue;
+      const b2 = board.slice(); b2[to]=p;
+      const millMade = millsFormedBy(b2,p,to).length>0;
+      addCaps(b2,{type:'place',from:null,to,millMade});
+    }
     return actions;
   }
-  const fly=canFly(state,p);
-  const my=b.map((v,i)=>v===p?i:-1).filter(i=>i>=0);
+
+  const fly = canFly(state,p);
+  const my = board.map((v,i)=> v===p?i:-1).filter(i=>i>=0);
   for(const from of my){
-    const targets=fly ? b.map((v,i)=>v===null?i:-1).filter(i=>i>=0) : ADJ[from].filter(to=>b[to]===null);
-    for(const to of targets) actions.push({type:"move",from,to});
+    const targets = fly
+      ? board.map((v,i)=> v==null?i:-1).filter(i=>i>=0)
+      : ADJ[from].filter(to=>board[to]==null);
+    for(const to of targets){
+      const b2 = board.slice(); b2[from]=null; b2[to]=p;
+      const millMade = millsFormedBy(b2,p,to).length>0;
+      addCaps(b2,{type:'move',from,to,millMade});
+    }
   }
   return actions;
 }
-function evalState(state){
-  if(state.winner==="B") return 1e9;
-  if(state.winner==="W") return -1e9;
-  const w=countOnBoard(state.board,"W");
-  const b=countOnBoard(state.board,"B");
-  let s=(b-w)*100;
-  const millsW=MILLS.filter(m=>m.every(i=>state.board[i]==="W")).length;
-  const millsB=MILLS.filter(m=>m.every(i=>state.board[i]==="B")).length;
-  s+=(millsB-millsW)*70;
-  if(state.capture) s+=(state.capture.by==="B")?120:-120;
+
+function applyActionPure(state,p,action){
+  const opp = p==='W'?'B':'W';
+  const s = JSON.parse(JSON.stringify(state));
+  const b = s.board;
+
+  if(action.type==='place'){ b[action.to]=p; s.placed[p]+=1; }
+  else { b[action.from]=null; b[action.to]=p; }
+
+  if(action.capture!=null && b[action.capture]===opp) b[action.capture]=null;
+
+  // turn + captureBy
+  const millMade = action.millMade;
+  if(millMade && action.capture==null){
+    s.captureBy = p;
+    s.turn = p;
+  }else{
+    s.captureBy = null;
+    s.turn = opp;
+  }
+
+  s.winner = checkWinner(s);
   return s;
 }
-function minimax(state,depth,alpha,beta,maxB){
-  if(depth===0||state.winner) return {score:evalState(state),action:null};
-  const p=maxB?"B":"W";
-  const acts=generateActions(state,p);
-  if(!acts.length) return {score:evalState(state),action:null};
 
-  let bestAction=null;
-  if(maxB){
+function evalState(state){
+  const b = state.board;
+  const w = countOnBoard(b,'W'), bl = countOnBoard(b,'B');
+  if(state.winner==='B') return 1e9;
+  if(state.winner==='W') return -1e9;
+  const material = (bl-w)*100;
+  const millsW = MILLS.filter(m=>m.every(i=>b[i]==='W')).length;
+  const millsB = MILLS.filter(m=>m.every(i=>b[i]==='B')).length;
+  return material + (millsB-millsW)*60;
+}
+
+function minimax(state,depth,alpha,beta,maxForB){
+  if(depth===0 || state.winner) return {score: evalState(state), action:null};
+  const p = maxForB ? 'B' : 'W';
+  const acts = generateActions(state,p);
+  if(!acts.length) return {score: evalState(state), action:null};
+  let bestAct=null;
+
+  if(maxForB){
     let best=-Infinity;
     for(const a of acts){
-      const next=applyAction(state,p,a);
-      const r=minimax(next,depth-1,alpha,beta,false);
-      if(r.score>best){best=r.score;bestAction=a;}
-      alpha=Math.max(alpha,best);
-      if(beta<=alpha) break;
+      const s2 = applyActionPure(state,'B',a);
+      const r = minimax(s2,depth-1,alpha,beta,false);
+      if(r.score>best){ best=r.score; bestAct=a; }
+      alpha=Math.max(alpha,best); if(beta<=alpha) break;
     }
-    return {score:best,action:bestAction};
+    return {score:best, action:bestAct};
   }else{
     let best=Infinity;
     for(const a of acts){
-      const next=applyAction(state,p,a);
-      const r=minimax(next,depth-1,alpha,beta,true);
-      if(r.score<best){best=r.score;bestAction=a;}
-      beta=Math.min(beta,best);
-      if(beta<=alpha) break;
+      const s2 = applyActionPure(state,'W',a);
+      const r = minimax(s2,depth-1,alpha,beta,true);
+      if(r.score<best){ best=r.score; bestAct=a; }
+      beta=Math.min(beta,best); if(beta<=alpha) break;
     }
-    return {score:best,action:bestAction};
+    return {score:best, action:bestAct};
   }
 }
-function aiStep(){
+
+function aiMove(){
   if(game.winner) return;
-  // AI = B
-  if(game.capture){
-    if(game.capture.by!=="B") return;
-  }else{
-    if(game.turn!=="B") return;
-  }
+  if(game.turn!=='B') return;
   setStatus("AI düşünüyor...");
   setTimeout(()=>{
-    const depth=(game.placed.W<9||game.placed.B<9)?3:4;
-    const {action}=minimax(game,depth,-Infinity,Infinity,true);
-    if(!action){ game.winner=checkWinner(game)||"W"; render(); showEndOverlay(game.winner); return; }
-    game=applyAction(game,"B",action);
-    render();
-    if(game.winner){ showEndOverlay(game.winner); return; }
-    if(game.capture && game.capture.by==="B"){ aiStep(); return; }
-    setTurnText();
-  },160);
-}
+    const depth = (phaseOf(game,'B')==="placing") ? 3 : 4;
+    let act = null;
 
-function onClickPos(i){
-  if(MODE!=="AI") return;
-  if(game.winner) return;
+    // yerleştirmede biraz rastgelelik
+    if(phaseOf(game,'B')==="placing"){
+      const acts = generateActions(game,'B');
+      const scored = acts.map(a=>({a, sc: evalState(applyActionPure(game,'B',a))}))
+        .sort((x,y)=>y.sc-x.sc);
+      const top = scored.slice(0, Math.min(6, scored.length)).map(x=>x.a);
+      act = pickRandom(top);
+    }else{
+      act = minimax(game, depth, -Infinity, Infinity, true).action;
+    }
 
-  const b=game.board;
-  const me="W", opp="B";
-
-  if(game.capture){
-    if(game.capture.by!==me) return;
-    if(b[i]!==opp) return;
-    if(!game.capture.removable.includes(i)) return;
-    doActionAI({type:"capture",at:i});
-    return;
-  }
-
-  const phase=phaseOf(game,me);
-
-  if(phase==="placing"){
-    if(b[i]!==null) return;
-    doActionAI({type:"place",to:i});
-    return;
-  }
-
-  if(b[i]===me){
-    game.pendingMover=(game.pendingMover===i?null:i);
-    render();
-    return;
-  }
-
-  if(b[i]===null && game.pendingMover!==null){
-    const from=game.pendingMover;
-    const fly=canFly(game,me);
-    if(!fly && !ADJ[from].includes(i)) return;
-
-    if(lastHumanMove && lastHumanMove.from===i && lastHumanMove.to===from){
-      setStatus("Aynı hamleyi hemen geri alamazsın. Farklı hamle dene.");
+    if(!act){
+      game.winner = checkWinner(game) || 'W';
+      render();
+      finishIfWinner();
       return;
     }
 
-    game.pendingMover=null;
-    doActionAI({type:"move",from,to:i});
+    game = applyActionPure(game,'B',act);
+    pushHistory();
+    pendingMover = null;
+    render();
+
+    if(game.winner){ finishIfWinner(); return; }
+    setStatus("AI hamle yaptı. Sıra sende.");
+  }, 150);
+}
+
+/* =========================
+   Online (Realtime) – Oda
+========================= */
+function makeCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s="";
+  for(let i=0;i<6;i++) s+=chars[randInt(chars.length)];
+  return s;
+}
+
+async function createRoom(){
+  const n = $("#name").value.trim();
+  const c = $("#classroom").value.trim();
+  if(!n||!c){ setLoginMsg("Ad Soyad ve Sınıf/Şube zorunlu."); return; }
+
+  roomCode = makeCode();
+  role = 'W'; // host turuncu
+  mode = "ONLINE";
+
+  const roomRef = ref(db, `rooms/${roomCode}`);
+  const data = {
+    createdAt: Date.now(),
+    host: { name:n, classroom:c },
+    guest: null,
+    status: "waiting",
+    game: baseGame()
+  };
+  await set(roomRef, data);
+
+  $("#roomCodeBox").textContent = roomCode;
+  setLoginMsg("Oda oluşturuldu. Rakip kodla katılınca oyun başlayacak.");
+
+  // oda dinle
+  subscribeRoom(roomCode);
+}
+
+async function joinRoom(){
+  const n = $("#name").value.trim();
+  const c = $("#classroom").value.trim();
+  const code = $("#joinCode").value.trim().toUpperCase();
+  if(!n||!c){ setLoginMsg("Ad Soyad ve Sınıf/Şube zorunlu."); return; }
+  if(!code){ setLoginMsg("Oda kodu gir."); return; }
+
+  const roomRef = ref(db, `rooms/${code}`);
+  const snap = await get(roomRef);
+  if(!snap.exists()){ setLoginMsg("Bu oda bulunamadı."); return; }
+
+  const room = snap.val();
+  if(room.guest){ setLoginMsg("Bu oda dolu."); return; }
+
+  // guest yaz
+  await update(roomRef, {
+    guest: { name:n, classroom:c },
+    status: "playing"
+  });
+
+  roomCode = code;
+  role = 'B'; // guest lacivert
+  mode = "ONLINE";
+  setLoginMsg("Odaya katıldın. Oyun başlıyor...");
+  subscribeRoom(code);
+}
+
+function subscribeRoom(code){
+  const roomRef = ref(db, `rooms/${code}`);
+  if(roomUnsub){ off(roomRef, "value", roomUnsub); roomUnsub=null; }
+
+  roomUnsub = onValue(roomRef, (snap)=>{
+    if(!snap.exists()){
+      setStatus("Oda silinmiş.");
+      return;
+    }
+    const room = snap.val();
+
+    // UI geç
+    $("#loginCard").style.display="none";
+    $("#gameUI").style.display="flex";
+    show($("#roomInfo"), true);
+    $("#roomInfo").innerHTML = `<b>Oda:</b> ${code} • <span class="pill">${room.status==="waiting"?"Rakip bekleniyor…":"Oynanıyor"}</span>`;
+
+    // game sync
+    game = room.game || baseGame();
+    render();
+
+    if(room.status==="waiting"){
+      setStatus("Rakip bekleniyor…");
+      return;
+    }
+
+    // sıra bilgisi
+    const myTurn = (game.turn === role);
+    if(game.winner){
+      finishIfWinner();
+    }else if(game.captureBy){
+      setStatus(game.captureBy===role
+        ? "Değirmen yaptın! Rakipten 1 taş seçip kaldır."
+        : "Rakip değirmen yaptı. Taşını kaldırmasını bekle…");
+    }else{
+      setStatus(myTurn ? "Sıra sende." : "Rakibin hamlesi bekleniyor…");
+    }
+  });
+}
+
+async function resetOnlineGame(){
+  if(!roomCode) return;
+  const roomRef = ref(db, `rooms/${roomCode}`);
+  await update(roomRef, { game: baseGame(), status:"playing" });
+  pendingMover=null;
+}
+
+async function onlineSubmit(action){
+  if(!roomCode || !role) return;
+
+  const gameRef = ref(db, `rooms/${roomCode}/game`);
+
+  const res = await runTransaction(gameRef, (curr)=>{
+    if(!curr) return curr;
+    if(curr.winner) return curr;
+
+    const p = role; // benim taşım
+    const opp = (p==='W')?'B':'W';
+    const b = curr.board || Array(24).fill(null);
+    const placed = curr.placed || {W:0,B:0};
+
+    // sıra kontrolü
+    if(curr.turn !== p) return; // geçersiz -> transaction no change
+
+    // capture zorunluluğu
+    if(curr.captureBy && curr.captureBy !== p) return;
+
+    // kopya state
+    const s = JSON.parse(JSON.stringify(curr));
+    s.board = b.slice();
+    s.placed = {W:placed.W, B:placed.B};
+
+    const phase = phaseOf(s,p);
+    const fly = canFly(s,p);
+
+    // ACTION doğrulama + uygula
+    if(curr.captureBy === p){
+      // sadece capture bekleniyor
+      if(action.type !== "capture") return;
+      const idx = action.idx;
+      if(s.board[idx] !== opp) return;
+      const removable = removableOpponentStones(s.board, opp);
+      if(!removable.includes(idx)) return;
+
+      s.board[idx] = null;
+      s.captureBy = null;
+      s.turn = opp;
+      s.moveSeq = (s.moveSeq||0)+1;
+      s.winner = checkWinner(s);
+      return s;
+    }
+
+    // normal hamle
+    if(phase==="placing"){
+      if(action.type!=="place") return;
+      const to = action.to;
+      if(s.board[to] != null) return;
+      s.board[to] = p;
+      s.placed[p] += 1;
+
+      const millMade = millsFormedBy(s.board,p,to).length>0;
+      if(millMade){
+        // taş alma zorunlu
+        s.captureBy = p;
+        s.turn = p;
+      }else{
+        s.turn = opp;
+      }
+      s.moveSeq = (s.moveSeq||0)+1;
+      s.winner = checkWinner(s);
+      return s;
+    }
+
+    // moving
+    if(action.type!=="move") return;
+    const from = action.from, to = action.to;
+    if(s.board[from] !== p) return;
+    if(s.board[to] != null) return;
+    if(!fly && !ADJ[from].includes(to)) return;
+
+    s.board[from]=null; s.board[to]=p;
+    const millMade = millsFormedBy(s.board,p,to).length>0;
+    if(millMade){
+      s.captureBy = p;
+      s.turn = p;
+    }else{
+      s.turn = opp;
+    }
+    s.moveSeq = (s.moveSeq||0)+1;
+    s.winner = checkWinner(s);
+    return s;
+  });
+
+  // transaction sonrası local seçim temizle
+  pendingMover=null;
+  render();
+
+  return res;
+}
+
+/* =========================
+   Tıklama (AI ve Online ortak)
+========================= */
+function finishIfWinner(){
+  if(!game.winner) return;
+  const youAre = (mode==="AI") ? 'W' : role; // AI modda sen turuncusun
+  const win = (game.winner === youAre);
+  if(win){
+    openModal("KAZANDIN! 🎉", "Harika! Tekrar denemek istersen 'Tekrar Dene'ye bas.", true);
+  }else{
+    openModal("KAYBETTİN 😕", "Tekrar dene! 'Tekrar Dene'ye bas.", false);
+  }
+  setStatus("Oyun bitti.");
+}
+
+function onClickPos(i){
+  if(!game || game.winner) return;
+
+  /* ONLINE: hamleleri DB’ye transaction ile gönderiyoruz */
+  if(mode==="ONLINE"){
+    if(game.turn !== role) return;
+
+    // capture gerekiyorsa
+    if(game.captureBy === role){
+      onlineSubmit({type:"capture", idx:i});
+      return;
+    }
+
+    const b = game.board;
+    const phase = phaseOf(game, role);
+
+    if(phase==="placing"){
+      if(b[i]!=null) return;
+      onlineSubmit({type:"place", to:i});
+      return;
+    }
+
+    // moving
+    if(b[i]===role){
+      pendingMover = (pendingMover===i ? null : i);
+      render();
+      return;
+    }
+    if(b[i]==null && pendingMover!=null){
+      const from = pendingMover;
+      onlineSubmit({type:"move", from, to:i});
+      return;
+    }
+    return;
+  }
+
+  /* AI: lokal */
+  if(mode==="AI"){
+    if(game.winner) return;
+    if(game.turn!=='W') return;
+
+    const b = game.board;
+    const opp = 'B';
+    const phase = phaseOf(game,'W');
+
+    // capture modu
+    if(game.captureBy==='W'){
+      if(b[i]!==opp) return;
+      const removable = removableOpponentStones(b, opp);
+      if(!removable.includes(i)) return;
+      b[i]=null;
+      game.captureBy=null;
+      game.turn='B';
+      game.moveSeq++;
+      game.winner=checkWinner(game);
+      pushHistory(); pendingMover=null; render();
+      if(game.winner){ finishIfWinner(); return; }
+      aiMove();
+      return;
+    }
+
+    // placing
+    if(phase==="placing"){
+      if(b[i]!=null) return;
+      b[i]='W'; game.placed.W++;
+      const millMade = millsFormedBy(b,'W',i).length>0;
+      if(millMade){
+        game.captureBy='W';
+        game.turn='W';
+        setStatus("Değirmen yaptın! Rakibin 1 taşına dokun.");
+      }else{
+        game.turn='B';
+      }
+      game.moveSeq++; game.winner=checkWinner(game);
+      pushHistory(); pendingMover=null; render();
+      if(game.winner){ finishIfWinner(); return; }
+      if(game.turn==='B') aiMove();
+      return;
+    }
+
+    // moving
+    if(b[i]==='W'){
+      pendingMover = (pendingMover===i ? null : i);
+      render();
+      return;
+    }
+    if(b[i]==null && pendingMover!=null){
+      const from = pendingMover;
+      const fly = canFly(game,'W');
+      if(!fly && !ADJ[from].includes(i)) return;
+
+      b[from]=null; b[i]='W';
+      const millMade = millsFormedBy(b,'W',i).length>0;
+      if(millMade){
+        game.captureBy='W';
+        game.turn='W';
+        setStatus("Değirmen yaptın! Rakibin 1 taşına dokun.");
+      }else{
+        game.turn='B';
+      }
+      game.moveSeq++; game.winner=checkWinner(game);
+      pushHistory(); pendingMover=null; render();
+      if(game.winner){ finishIfWinner(); return; }
+      if(game.turn==='B') aiMove();
+      return;
+    }
   }
 }
 
-/* ================= NEW GAME ================= */
-function newGameAI(){
-  game=freshState();
-  history=[JSON.parse(JSON.stringify(game))];
-  lastHumanMove=null;
+/* =========================
+   Butonlar / UI akışı
+========================= */
+$("#undoBtn").addEventListener("click", ()=>{
+  if(mode!=="AI" || history.length<=1) return;
+  history.pop();
+  game = JSON.parse(JSON.stringify(history[history.length-1]));
+  pendingMover=null;
   render();
-  setStatus("Sıra sende. Boş bir noktaya taş koy.");
-}
-
-/* ================= Buttons ================= */
-$("#toggleOnline").addEventListener("click", ()=>{
-  const p=$("#onlinePanel");
-  p.style.display=(p.style.display==="none"?"block":"none");
-});
-
-$("#startAI").addEventListener("click", ()=>{
-  if(!profileOK()) return;
-  MODE="AI"; ROLE="W"; ROOM=null;
-  openGameUI();
-  newGameAI();
+  setStatus("Geri alındı. Sıra: " + (game.turn==='W' ? "Sen" : "AI"));
 });
 
 $("#newBtn").addEventListener("click", ()=>{
-  if(MODE==="AI") newGameAI();
-  else setStatus("Online mod bu sürümde kapalı. (AI çalışıyor.)");
-});
-
-$("#undoBtn").addEventListener("click", ()=>{
-  if(MODE!=="AI") return;
-  if(history.length<=1) return;
-  history.pop();
-  game=JSON.parse(JSON.stringify(history[history.length-1]));
-  render();
-  setTurnText();
+  closeModal();
+  if(mode==="AI") newLocalGame();
+  if(mode==="ONLINE") resetOnlineGame();
 });
 
 $("#hintBtn").addEventListener("click", ()=>{
-  if(MODE!=="AI") return;
-  if(game.winner) return;
-  if(game.capture && game.capture.by==="W"){ setStatus("İpucu: Alınabilir taşlardan birini seç."); return; }
-  if(game.turn!=="W") return;
-  const depth=(game.placed.W<9||game.placed.B<9)?3:4;
-  const {action}=minimax(game,depth,-Infinity,Infinity,false);
-  if(!action){ setStatus("İpucu bulunamadı."); return; }
-  if(action.type==="place") setStatus(`İpucu: #${action.to+1} noktasına taş koy.`);
-  else if(action.type==="move") setStatus(`İpucu: #${action.from+1} → #${action.to+1}.`);
-  else setStatus("İpucu: Taş al.");
+  if(mode!=="AI" || game.turn!=='W' || game.winner) return;
+  const depth = (phaseOf(game,'W')==="placing") ? 3 : 4;
+  const act = minimax(game, depth, -Infinity, Infinity, false).action;
+  if(!act){ setStatus("İpucu bulunamadı."); return; }
+  setStatus(act.type==='place' ? `İpucu: #${act.to+1} noktasına koy.` : `İpucu: #${act.from+1} → #${act.to+1}.`);
 });
 
-$("#leaveBtn").addEventListener("click", ()=>{
-  MODE=null; ROLE="W"; ROOM=null;
-  game=freshState(); history=[];
-  setLoginMsg(""); setLoginMsgMain("");
-  openLoginUI();
+$("#onlineBtn").addEventListener("click", ()=>{
+  show($("#onlinePanel"), true);
+  setLoginMsg("Online için oda oluştur veya koda katıl.");
 });
 
-/* ================= ONLINE (Firebase) — sadece istenirse =================
-   Şimdilik AI girişini garantiye almak için online kısmı devre dışı.
-   Online istenirse, bir sonraki adımda bu alana dinamik Firebase eklenir.
-========================================================================= */
-$("#createRoom").addEventListener("click", ()=>{
-  setLoginMsg("Online mod bir sonraki adımda açılacak. Şu an AI çalışıyor.");
-});
-$("#joinRoomBtn").addEventListener("click", ()=>{
-  setLoginMsg("Online mod bir sonraki adımda açılacak. Şu an AI çalışıyor.");
+$("#aiBtn").addEventListener("click", ()=>{
+  const n = $("#name").value.trim();
+  const c = $("#classroom").value.trim();
+  if(!n||!c){ setLoginMsg("Ad Soyad ve Sınıf/Şube zorunlu."); return; }
+
+  mode="AI"; role=null; roomCode=null;
+  $("#loginCard").style.display="none";
+  $("#gameUI").style.display="flex";
+  show($("#roomInfo"), false);
+  newLocalGame();
 });
 
-/* ================= Initial ================= */
+$("#createRoomBtn").addEventListener("click", async ()=>{
+  try{
+    setLoginMsg("Oda oluşturuluyor...");
+    await createRoom();
+  }catch(e){
+    console.error(e);
+    setLoginMsg("Oda oluşturma hatası. Realtime Database + Rules kontrol.");
+  }
+});
+
+$("#joinRoomBtn").addEventListener("click", async ()=>{
+  try{
+    setLoginMsg("Odaya bağlanıyor...");
+    await joinRoom();
+  }catch(e){
+    console.error(e);
+    setLoginMsg("Katılma hatası. Kod/Rules kontrol.");
+  }
+});
+
+/* İlk render */
+game = baseGame();
 render();
-setLoginMsgMain("AI ile başlamak için bilgileri girip butona bas.");
+$("#modePill").textContent = "Mod: —";
+$("#phasePill").textContent = "Aşama: —";
+setLoginMsg("");
 </script>
 </body>
 </html>
