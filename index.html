@@ -3,165 +3,472 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Dokuz Taş | AI & Online</title>
+<title>Dokuz Taş | Online Oda + AI</title>
 
 <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
 <style>
-body{margin:0;font-family:system-ui;background:#0b1020;color:#e9edff}
-.card{background:#121a33;border:1px solid #2a3570;border-radius:16px;padding:14px}
-.wrap{max-width:900px;margin:auto;padding:14px}
-button{padding:12px 16px;border-radius:14px;border:1px solid #4052b6;background:#0f1630;color:#fff;font-weight:700}
-button:hover{border-color:#7aa2ff}
-input{width:100%;padding:12px;border-radius:12px;border:1px solid #2a3570;background:#0f1630;color:#fff}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.status{margin-top:10px;color:#c9d0ff;white-space:pre-line}
-svg{width:100%;max-width:520px}
-.pos{fill:#0f1630;stroke:#2a3570;stroke-width:3}
-.pos.empty{cursor:pointer}
-.stoneW{fill:#f59e0b}
-.stoneB{fill:#0b3a8a}
-.big{font-size:56px;font-weight:900}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:9999}
+  :root { --bg:#0b1020; --panel:#121a33; --text:#e9edff; --muted:#c9d0ff; --border:#2a3570; }
+  body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text)}
+  .wrap{max-width:980px;margin:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button{padding:12px 16px;border-radius:14px;border:1px solid #4052b6;background:#0f1630;color:#fff;font-weight:800;cursor:pointer}
+  button:hover{border-color:#7aa2ff}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:#0f1630;color:#fff;box-sizing:border-box}
+  .status{margin-top:10px;color:var(--muted);white-space:pre-line;min-height:44px;line-height:1.35}
+  .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0f1630;color:var(--muted);font-size:12px}
+  svg{width:min(92vw,560px);height:auto}
+  .pos{fill:#0f1630;stroke:var(--border);stroke-width:4}
+  .pos.empty{cursor:pointer}
+  .stoneW{fill:#f59e0b;stroke:#ffd08a;stroke-width:4}
+  .stoneB{fill:#0b3a8a;stroke:#7aa2ff;stroke-width:4}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:99999}
+  .big{font-size:clamp(38px,8vw,74px);font-weight:1000;margin:0 0 10px 0;text-transform:uppercase;letter-spacing:1px}
+  .sub{font-size:clamp(16px,2.8vw,22px);color:#c9d0ff;margin:0 0 18px 0}
+  .center{text-align:center}
 </style>
 </head>
 
 <body>
 <div class="wrap">
 
-<div class="card" id="login">
-  <h2>Oyuna Giriş</h2>
-  <input id="name" placeholder="Ad Soyad">
-  <br><br>
-  <input id="classroom" placeholder="Sınıf / Şube">
-  <br><br>
-  <div class="row">
-    <button id="aiBtn">Bilgisayara Karşı</button>
-    <button id="onlineBtn">Online Rakip</button>
+  <div class="card" id="loginCard">
+    <h2 style="margin:0 0 8px 0;">Oyuna Giriş</h2>
+    <div class="row">
+      <span class="pill">Host: Turuncu</span>
+      <span class="pill">Guest: Lacivert</span>
+      <span class="pill">Online Oda</span>
+    </div>
+
+    <div style="height:10px"></div>
+    <label class="pill">Ad Soyad</label>
+    <div style="height:6px"></div>
+    <input id="name" placeholder="Örn: Ayşe Yılmaz" autocomplete="name"/>
+
+    <div style="height:10px"></div>
+    <label class="pill">Sınıf / Şube</label>
+    <div style="height:6px"></div>
+    <input id="classroom" placeholder="Örn: 5/A"/>
+
+    <div style="height:12px"></div>
+
+    <div class="row">
+      <button id="aiBtn">Bilgisayara Karşı (AI)</button>
+      <button id="toggleOnline">Online Rakip</button>
+    </div>
+
+    <div id="onlinePanel" style="display:none;margin-top:12px;">
+      <div class="row">
+        <button id="createRoom">Oda Oluştur</button>
+        <button id="joinRoomBtn">Koda Katıl</button>
+      </div>
+      <div style="height:10px"></div>
+      <label class="pill">Oda Kodu</label>
+      <div style="height:6px"></div>
+      <input id="roomCode" placeholder="Örn: AB12CD" style="text-transform:uppercase"/>
+      <div class="status" id="loginMsg"></div>
+    </div>
+
+    <div class="status" id="loginMsgMain"></div>
   </div>
 
-  <div id="onlinePanel" style="display:none;margin-top:10px">
-    <button id="createRoom">Oda Oluştur</button>
-    <input id="roomCode" placeholder="Oda Kodu">
-    <button id="joinRoom">Koda Katıl</button>
+  <div class="card" id="gameUI" style="display:none;">
+    <div class="row">
+      <span class="pill" id="modePill">Mod: -</span>
+      <span class="pill" id="rolePill">Renk: -</span>
+      <span class="pill" id="roomPill" style="display:none;">Oda: -</span>
+      <span class="pill" id="turnPill">Sıra: -</span>
+    </div>
+
+    <div style="height:10px"></div>
+
+    <div class="row" style="justify-content:center;">
+      <svg viewBox="0 0 1000 1000" aria-label="Dokuz taş (basit online demo)">
+        <rect x="100" y="100" width="800" height="800" fill="none" stroke="#93a4ff55" stroke-width="10"/>
+        <g id="board"></g>
+      </svg>
+    </div>
+
+    <div class="row" style="justify-content:center;margin-top:10px;">
+      <button id="newBtn">Yeni Oyun</button>
+      <button id="leaveBtn">Çık</button>
+    </div>
+
+    <div class="status" id="status"></div>
   </div>
-
-  <div class="status" id="loginMsg"></div>
 </div>
 
-<div class="card" id="game" style="display:none">
-  <svg viewBox="0 0 1000 1000">
-    <rect x="100" y="100" width="800" height="800" stroke="#93a4ff" fill="none" stroke-width="8"/>
-    <g id="board"></g>
-  </svg>
-  <div class="status" id="status"></div>
-</div>
-
-</div>
-
-<div class="overlay" id="end">
-  <div class="card" style="text-align:center">
-    <div class="big" id="endTitle"></div>
-    <p id="endText"></p>
-    <button onclick="location.reload()">Tekrar Dene</button>
+<div class="overlay" id="endOverlay">
+  <div class="card center" style="width:min(94vw,640px);border:2px solid #4052b6;border-radius:22px;">
+    <div style="font-size:64px" id="endIcon">🏁</div>
+    <div class="big" id="endTitle">OYUN BİTTİ</div>
+    <div class="sub" id="endText"></div>
+    <div class="row" style="justify-content:center;">
+      <button id="retryBtn">Tekrar Dene</button>
+      <button id="closeEndBtn">Kapat</button>
+    </div>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, updateDoc,
+    onSnapshot, runTransaction, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-const firebaseConfig={
-  apiKey:"AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
-  authDomain:"oyun-3bfba.firebaseapp.com",
-  projectId:"oyun-3bfba"
-};
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
+    authDomain: "oyun-3bfba.firebaseapp.com",
+    projectId: "oyun-3bfba"
+  };
 
-const $=s=>document.querySelector(s);
-let MODE="AI",ROLE="W",ROOM=null;
-let game={board:Array(24).fill(null),turn:"W"};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-const POS=[
-[100,100],[500,100],[900,100],
-[100,500],[500,500],[900,500],
-[100,900],[500,900],[900,900]
-];
+  const $ = s => document.querySelector(s);
 
-function render(){
-  const g=$("#board"); g.innerHTML="";
-  game.board.forEach((v,i)=>{
-    const [x,y]=POS[i];
-    const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx",x);c.setAttribute("cy",y);c.setAttribute("r",40);
-    c.classList.add("pos");
-    if(!v)c.classList.add("empty");
-    if(v==="W")c.classList.add("stoneW");
-    if(v==="B")c.classList.add("stoneB");
-    c.onclick=()=>move(i);
-    g.appendChild(c);
+  /* ===== Basit 3x3 nokta (online altyapı için demo) =====
+     Online çalışınca sonra bunu 24 noktalı gerçek dokuz taş tahtasına taşıyacağız.
+  */
+  const POS = [
+    [160,160],[500,160],[840,160],
+    [160,500],[500,500],[840,500],
+    [160,840],[500,840],[840,840]
+  ];
+
+  let MODE = null;    // "AI" | "ONLINE"
+  let ROLE = null;    // "W" | "B" (online)
+  let ROOM = null;
+  let unsub = null;
+
+  let game = freshState();
+
+  function freshState(){
+    return {
+      board: Array(9).fill(null), // demo 9 hücre
+      turn: "W",
+      winner: null,
+      updatedAt: null
+    };
+  }
+
+  function setMainMsg(t){ $("#loginMsgMain").textContent = t; }
+  function setOnlineMsg(t){ $("#loginMsg").textContent = t; }
+  function setStatus(t){ $("#status").textContent = t; }
+
+  function openGame(){
+    $("#loginCard").style.display = "none";
+    $("#gameUI").style.display = "block";
+    hideEnd();
+  }
+
+  function openLogin(){
+    $("#loginCard").style.display = "block";
+    $("#gameUI").style.display = "none";
+    hideEnd();
+  }
+
+  function showEnd(winner){
+    const mySide = ROLE ?? "W";
+    const won = winner === mySide;
+    $("#endOverlay").style.display = "flex";
+
+    if(won){
+      $("#endIcon").textContent = "🏆";
+      $("#endTitle").textContent = "KAZANDIN!";
+      $("#endText").textContent = "Tebrikler 🎉";
+      if(window.confetti){
+        confetti({ particleCount: 240, spread: 120, origin: { y: 0.65 } });
+        setTimeout(()=> confetti({ particleCount: 180, spread: 140, origin: { y: 0.55 } }), 200);
+      }
+    }else{
+      $("#endIcon").textContent = "😔";
+      $("#endTitle").textContent = "KAYBETTİN";
+      $("#endText").textContent = "Tekrar dene — bu sefer olacak.";
+      if(window.confetti){
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.2 } });
+      }
+    }
+  }
+
+  function hideEnd(){
+    $("#endOverlay").style.display = "none";
+  }
+
+  $("#closeEndBtn").addEventListener("click", hideEnd);
+  $("#retryBtn").addEventListener("click", ()=>{
+    hideEnd();
+    newGame();
   });
-}
 
-function move(i){
-  if(game.board[i])return;
-  game.board[i]=game.turn;
-  game.turn=game.turn==="W"?"B":"W";
-  render();
-}
-
-function endGame(win){
-  $("#end").style.display="flex";
-  if(win){
-    $("#endTitle").textContent="KAZANDIN!";
-    confetti({particleCount:250,spread:100});
-  }else{
-    $("#endTitle").textContent="KAYBETTİN";
-    $("#endText").textContent="Tekrar dene";
+  function updateHeader(){
+    $("#modePill").textContent = "Mod: " + (MODE === "AI" ? "Bilgisayar" : "Online");
+    $("#rolePill").textContent = "Renk: " + ((ROLE ?? "W") === "W" ? "Turuncu" : "Lacivert");
+    $("#turnPill").textContent = "Sıra: " + (game.turn === "W" ? "Turuncu" : "Lacivert");
+    if(MODE === "ONLINE"){
+      $("#roomPill").style.display = "inline-block";
+      $("#roomPill").textContent = "Oda: " + ROOM;
+    } else {
+      $("#roomPill").style.display = "none";
+    }
   }
-}
 
-$("#aiBtn").onclick=()=>{
-  MODE="AI";
-  $("#login").style.display="none";
-  $("#game").style.display="block";
-  render();
-};
+  function render(){
+    updateHeader();
+    const g = $("#board");
+    g.innerHTML = "";
 
-$("#onlineBtn").onclick=()=>{
-  $("#onlinePanel").style.display="block";
-};
+    for(let i=0;i<POS.length;i++){
+      const [x,y] = POS[i];
+      const v = game.board[i];
 
-$("#createRoom").onclick=async()=>{
-  ROOM=Math.random().toString(36).substring(2,8).toUpperCase();
-  await setDoc(doc(db,"rooms",ROOM),{game});
-  $("#loginMsg").textContent="Oda Kodu: "+ROOM;
-  listen();
-};
+      const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      c.setAttribute("cx", x);
+      c.setAttribute("cy", y);
+      c.setAttribute("r", 55);
 
-$("#joinRoom").onclick=async()=>{
-  ROOM=$("#roomCode").value.trim();
-  const snap=await getDoc(doc(db,"rooms",ROOM));
-  if(!snap.exists()){
-    $("#loginMsg").textContent="ODA YOK!";
-    return;
+      c.classList.add("pos");
+      if(!v) c.classList.add("empty");
+      if(v === "W") c.classList.add("stoneW");
+      if(v === "B") c.classList.add("stoneB");
+
+      c.addEventListener("click", ()=> onClick(i));
+      g.appendChild(c);
+    }
   }
-  game=snap.data().game;
-  $("#login").style.display="none";
-  $("#game").style.display="block";
-  render();
-  listen();
-};
 
-function listen(){
-  onSnapshot(doc(db,"rooms",ROOM),(s)=>{
-    if(!s.exists())return;
-    game=s.data().game;
+  function checkWinnerSimple(){
+    // demo: sadece doldu mu (berabere/bitir) - altyapı test
+    const full = game.board.every(x=>x!==null);
+    if(full) return "DRAW";
+    return null;
+  }
+
+  async function writeRoomState(next){
+    await updateDoc(doc(db,"rooms",ROOM), {
+      state: next,
+      updatedAt: serverTimestamp()
+    });
+  }
+
+  async function onClick(i){
+    if(game.winner) return;
+
+    if(MODE === "ONLINE"){
+      // sıra kontrol
+      if(game.turn !== ROLE) return;
+
+      try{
+        await runTransaction(db, async (tx)=>{
+          const ref = doc(db, "rooms", ROOM);
+          const snap = await tx.get(ref);
+          if(!snap.exists()) throw new Error("Oda yok");
+          const data = snap.data();
+          const state = data.state;
+
+          if(state.winner) throw new Error("Oyun bitti");
+          if(state.turn !== ROLE) throw new Error("Sıra sende değil");
+          if(state.board[i] !== null) throw new Error("Dolu");
+
+          const next = JSON.parse(JSON.stringify(state));
+          next.board[i] = ROLE;
+          next.turn = (ROLE === "W" ? "B" : "W");
+
+          const w = next.board.filter(x=>x==="W").length;
+          const b = next.board.filter(x=>x==="B").length;
+          if(w>=5) next.winner="W";        // demo kazanma şartı
+          else if(b>=5) next.winner="B";
+          else next.winner = checkWinnerSimple();
+
+          tx.update(ref, { state: next, updatedAt: serverTimestamp() });
+        });
+      }catch(e){
+        setStatus("Hamle olmadı: " + (e?.message || e));
+      }
+      return;
+    }
+
+    // AI modu (lokal)
+    if(game.turn !== "W") return;
+    if(game.board[i] !== null) return;
+
+    game.board[i] = "W";
+    game.turn = "B";
+    render();
+
+    // demo kazanma
+    const w = game.board.filter(x=>x==="W").length;
+    if(w>=5){ game.winner="W"; render(); showEnd("W"); return; }
+
+    // AI hamlesi
+    setTimeout(()=>{
+      const empty = game.board.map((v,idx)=> v===null ? idx : -1).filter(x=>x>=0);
+      if(!empty.length){ game.winner="DRAW"; render(); showEnd("B"); return; }
+      const pick = empty[Math.floor(Math.random()*empty.length)];
+      game.board[pick] = "B";
+      game.turn = "W";
+
+      const b = game.board.filter(x=>x==="B").length;
+      if(b>=5){ game.winner="B"; render(); showEnd("B"); return; }
+
+      const dw = checkWinnerSimple();
+      if(dw){ game.winner = "DRAW"; render(); }
+      render();
+    }, 220);
+  }
+
+  function listenRoom(){
+    if(unsub) unsub();
+    unsub = onSnapshot(doc(db,"rooms",ROOM), (snap)=>{
+      if(!snap.exists()) return;
+      const data = snap.data();
+      if(!data?.state) return;
+
+      game = data.state;
+      render();
+
+      if(game.winner){
+        if(game.winner === "DRAW"){
+          $("#endOverlay").style.display = "flex";
+          $("#endIcon").textContent = "🤝";
+          $("#endTitle").textContent = "BERABERE";
+          $("#endText").textContent = "Oyun bitti.";
+        } else {
+          showEnd(game.winner);
+        }
+      }
+    });
+  }
+
+  async function newGame(){
+    hideEnd();
+
+    if(MODE === "AI"){
+      game = freshState();
+      setStatus("AI modunda başla. Turuncu sensin.");
+      render();
+      return;
+    }
+
+    // Online: sadece Host sıfırlasın
+    if(ROLE !== "W"){
+      setStatus("Online'da yeni oyunu sadece Host (Turuncu) başlatabilir.");
+      return;
+    }
+
+    try{
+      await updateDoc(doc(db,"rooms",ROOM), {
+        state: freshState(),
+        updatedAt: serverTimestamp()
+      });
+      setStatus("Yeni oyun başlatıldı.");
+    }catch(e){
+      setStatus("Yeni oyun hatası: " + (e?.message || e));
+    }
+  }
+
+  function profileOK(){
+    const name = $("#name").value.trim();
+    const classroom = $("#classroom").value.trim();
+    if(!name || !classroom){
+      setMainMsg("Ad Soyad ve Sınıf/Şube zorunlu.");
+      return false;
+    }
+    setMainMsg("");
+    return true;
+  }
+
+  function genRoomCode(){
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    let s = "";
+    for(let i=0;i<6;i++) s += chars[Math.floor(Math.random()*chars.length)];
+    return s;
+  }
+
+  $("#toggleOnline").addEventListener("click", ()=>{
+    const p = $("#onlinePanel");
+    p.style.display = (p.style.display === "none" ? "block" : "none");
+  });
+
+  $("#aiBtn").addEventListener("click", ()=>{
+    if(!profileOK()) return;
+    MODE = "AI";
+    ROLE = "W";
+    ROOM = null;
+    if(unsub){ unsub(); unsub = null; }
+    openGame();
+    game = freshState();
+    setStatus("AI modunda oynuyorsun. Turuncu sensin.");
     render();
   });
-}
 
+  $("#createRoom").addEventListener("click", async ()=>{
+    if(!profileOK()) return;
+
+    MODE = "ONLINE";
+    ROLE = "W";
+    ROOM = genRoomCode();
+
+    try{
+      await setDoc(doc(db,"rooms",ROOM), {
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        hostName: $("#name").value.trim(),
+        state: freshState()
+      });
+      setOnlineMsg("Oda oluşturuldu.\nKOD: " + ROOM + "\nRakibe bu kodu gönder.");
+      openGame();
+      setStatus("Rakip kodla girince başlayabilirsiniz.\nOda: " + ROOM);
+      listenRoom();
+      render();
+    }catch(e){
+      setOnlineMsg("ODA OLUŞTURMA HATASI:\n" + (e?.message || e));
+    }
+  });
+
+  $("#joinRoomBtn").addEventListener("click", async ()=>{
+    if(!profileOK()) return;
+
+    MODE = "ONLINE";
+    ROLE = "B";
+    ROOM = $("#roomCode").value.trim().toUpperCase();
+
+    if(!ROOM){
+      setOnlineMsg("Oda kodu gir.");
+      return;
+    }
+
+    try{
+      const snap = await getDoc(doc(db,"rooms",ROOM));
+      if(!snap.exists()){
+        setOnlineMsg("ODA BULUNAMADI. Kodu kontrol et.");
+        return;
+      }
+      openGame();
+      setStatus("Odaya katıldın. Sıra Turuncu ile başlar.\nOda: " + ROOM);
+      listenRoom();
+      render();
+    }catch(e){
+      setOnlineMsg("KATILMA HATASI:\n" + (e?.message || e));
+    }
+  });
+
+  $("#newBtn").addEventListener("click", newGame);
+
+  $("#leaveBtn").addEventListener("click", ()=>{
+    if(unsub){ unsub(); unsub = null; }
+    MODE = null; ROLE = null; ROOM = null;
+    game = freshState();
+    setMainMsg(""); setOnlineMsg(""); setStatus("");
+    openLogin();
+  });
+
+  // ilk çizim
+  render();
+  setMainMsg("Mod seçip başlayabilirsin.");
 </script>
 </body>
 </html>
