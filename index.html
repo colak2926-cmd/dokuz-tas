@@ -43,18 +43,16 @@
     svg{ width:100%; height:auto; max-width:650px; }
     .line{ stroke:var(--line); stroke-width:8; stroke-linecap:round; }
 
-    /* Noktalar */
     .pos{ fill:#0b1020; stroke:#93a4ffcc; stroke-width:5; opacity:.98; }
     .pos.empty{ cursor:pointer; }
     .pos.empty:hover{ stroke:#c7d2fe; }
     .sel{ stroke:#ffd166 !important; stroke-width:6 !important; }
 
-    /* Taşlar */
     .stoneW{ fill:var(--orange); stroke:var(--orange2); stroke-width:3; }
     .stoneB{ fill:var(--navy); stroke:var(--navy2); stroke-width:3; }
     .stoneW, .stoneB{ pointer-events:none; }
 
-    /* Oyun bitti modal + konfeti */
+    /* End modal + confetti */
     #overlay{
       position:fixed; inset:0; display:none; align-items:center; justify-content:center;
       background:rgba(0,0,0,.55); z-index:50; padding:18px;
@@ -66,8 +64,8 @@
       box-shadow:0 18px 60px rgba(0,0,0,.45);
       text-align:center;
     }
-    #modal h2{ margin:0 0 8px 0; font-size:30px; }
-    #modal p{ margin:0 0 14px 0; color:var(--muted); }
+    #modal h2{ margin:0 0 8px 0; font-size:34px; font-weight:950; }
+    #modal p{ margin:0 0 14px 0; color:var(--muted); font-size:14px; }
     .btnRow{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
     .ok{ border-color:rgba(255,255,255,.25); background:#6ee7b7; color:#052016; }
     #confetti{ position:fixed; inset:0; pointer-events:none; z-index:60; display:none; }
@@ -90,7 +88,6 @@
   </div>
 
   <div class="wrap">
-
     <!-- LOGIN -->
     <div class="card" id="loginCard">
       <h1>Dokuz Taş – Giriş</h1>
@@ -116,7 +113,7 @@
 
       <div class="divider"></div>
 
-      <!-- ONLINE HER ZAMAN GÖRÜNÜR -->
+      <!-- ONLINE -->
       <div class="card" style="background:var(--btn);">
         <div class="row" style="align-items:flex-end">
           <div style="flex:1 1 220px">
@@ -127,7 +124,7 @@
           <button id="joinRoomBtn">🌐 Odaya Gir</button>
         </div>
         <div class="small" style="margin-top:8px">
-          Odayı oluşturan kişi <b>Turuncu (W)</b>, odaya giren kişi <b>Lacivert (B)</b> olur.
+          Odayı oluşturan kişi <b>Turuncu</b>, odaya giren kişi <b>Lacivert</b> olur.
         </div>
         <div class="small warn" style="margin-top:8px" id="onlineHint"></div>
       </div>
@@ -176,12 +173,11 @@
 
         <div class="divider"></div>
         <div class="small">
-          <b>Kontroller:</b> <br>
           • Taş koyma: boş noktaya dokun.<br>
           • Hareket: kendi taşına dokun → komşu boş noktaya dokun.<br>
           • <b>Uçma:</b> 3 taş kalınca istediğin boş noktaya gidebilirsin.<br>
-          • <b>Değirmen:</b> 3’lü yapınca rakipten 1 taş alırsın (mümkünse değirmende olmayan).<br><br>
-          <b>Yasak:</b> Aynı hamleyi üst üste yapamazsın; hemen geri hamle (A→B sonra B→A) de yasak.
+          • <b>Değirmen:</b> 3’lü yapınca rakipten 1 taş alırsın (mümkünse değirmende olmayan).<br>
+          • <b>Yasak:</b> Aynı hamle üst üste / hemen geri hamle yok.
         </div>
 
         <div class="divider"></div>
@@ -200,7 +196,6 @@
     collection, addDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  /* ====== Firebase config (SENİN PROJEN) ====== */
   const firebaseConfig = {
     apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
     authDomain: "oyun-3bfba.firebaseapp.com",
@@ -234,7 +229,6 @@
     return s;
   }
 
-  /* ===== Board data ===== */
   const POS = [
     [100,100],[500,100],[900,100],
     [250,250],[500,250],[750,250],
@@ -258,9 +252,6 @@
 
   const positionsG = document.getElementById("positions");
 
-  /* ===== Game state =====
-     capture: null OR { by:'W'/'B', pending:{type,from,to}, removable:[idx...] }
-  */
   function freshGame(){
     return {
       board: Array(24).fill(null),
@@ -268,7 +259,7 @@
       turn: 'W',
       capture: null,
       winner: null,
-      lastMove: { W:null, B:null } // {from,to}
+      lastMove: { W:null, B:null }
     };
   }
 
@@ -277,7 +268,6 @@
   let role = "HOST";       // HOST -> W, GUEST -> B
   let unsubRoom = null;
 
-  // UI-only selection
   let selected = null;
   let game = freshGame();
   let history = [];
@@ -290,7 +280,6 @@
     return myPlayer()==='W' ? 'B' : 'W';
   }
 
-  /* ===== Rules helpers ===== */
   function countOnBoard(b,p){ return b.filter(x=>x===p).length; }
   function phaseOf(state,p){ return state.placed[p] < 9 ? "placing" : "moving"; }
   function canFly(state,p){ return phaseOf(state,p)==="moving" && countOnBoard(state.board,p) <= 3; }
@@ -306,7 +295,6 @@
     const notInMill = oppIdx.filter(i => !isInAnyMill(board, opponent, i));
     return notInMill.length ? notInMill : oppIdx;
   }
-
   function hasAnyLegalMove(state, p){
     const b = state.board;
     if(phaseOf(state,p)==="placing") return b.some(x=>x===null);
@@ -321,7 +309,6 @@
     }
     return false;
   }
-
   function checkWinner(state){
     if (state.placed.W < 9 || state.placed.B < 9) return null;
 
@@ -333,7 +320,6 @@
     return null;
   }
 
-  // repeat rule: same or immediate reverse (MOVE only)
   function violatesRepeat(state, p, from, to){
     const lm = state.lastMove[p];
     if(!lm) return false;
@@ -345,10 +331,9 @@
     state.lastMove[p] = {from, to};
   }
 
-  /* ===== Apply actions ===== */
   function applyPlace(state, p, to){
     if(state.winner) return null;
-    if(state.capture) return null; // must resolve capture first
+    if(state.capture) return null;
     if(phaseOf(state,p)!=="placing") return null;
     if(state.turn!==p) return null;
     if(state.board[to]!==null) return null;
@@ -357,17 +342,14 @@
     s.board[to]=p;
     s.placed[p]++;
 
-    // mill?
     const millMade = millsFormedBy(s.board,p,to).length>0;
     if(millMade){
       const opp = p==='W'?'B':'W';
       const removable = removableOpponentStones(s.board, opp);
       s.capture = { by:p, pending:{type:'place', from:null, to}, removable };
-      // turn stays same until capture
     }else{
       s.turn = (p==='W'?'B':'W');
     }
-
     s.winner = checkWinner(s);
     return s;
   }
@@ -383,7 +365,6 @@
     const fly = canFly(state,p);
     if(!fly && !ADJ[from].includes(to)) return null;
 
-    // repeat restriction
     if(violatesRepeat(state,p,from,to)) return null;
 
     const s = structuredClone(state);
@@ -399,7 +380,6 @@
     }else{
       s.turn = (p==='W'?'B':'W');
     }
-
     s.winner = checkWinner(s);
     return s;
   }
@@ -407,7 +387,7 @@
   function applyCapture(state, p, capIndex){
     if(state.winner) return null;
     if(!state.capture) return null;
-    if(state.capture.by !== p) return null; // only who made mill can capture now
+    if(state.capture.by !== p) return null;
     if(state.turn !== p) return null;
 
     const s = structuredClone(state);
@@ -416,18 +396,13 @@
     if(s.board[capIndex]!==opp) return null;
     if(!s.capture.removable.includes(capIndex)) return null;
 
-    // remove
     s.board[capIndex]=null;
     s.capture = null;
-
-    // after capture switch turn
     s.turn = opp;
-
     s.winner = checkWinner(s);
     return s;
   }
 
-  /* ===== Rendering ===== */
   function updateKPI(){
     $("#wOnBoard").textContent = countOnBoard(game.board,'W');
     $("#bOnBoard").textContent = countOnBoard(game.board,'B');
@@ -488,14 +463,13 @@
       $("#onlineState").textContent = "—";
       $("#roomLabel").textContent = "—";
     }
-
     updateKPI();
   }
 
-  /* ===== End overlay + confetti ===== */
+  /* End + Confetti */
   function showEnd(win){
     $("#endTitle").textContent = win ? "KAZANDIN! 🎉" : "KAYBETTİN 😕";
-    $("#endText").textContent = win ? "Tebrikler! Tekrar denemek için “Tekrar Dene”." : "Tekrar dene. “Tekrar Dene”ye bas.";
+    $("#endText").textContent = win ? "Tebrikler! Tekrar oynamak için “Tekrar Dene”." : "Tekrar dene. “Tekrar Dene”ye bas.";
     $("#overlay").style.display = "flex";
     if(win) startConfetti(); else stopConfetti();
   }
@@ -503,7 +477,6 @@
     $("#overlay").style.display = "none";
     stopConfetti();
   }
-
   $("#playAgainBtn").addEventListener("click", ()=> newGame());
   $("#closeEndBtn").addEventListener("click", ()=> hideEnd());
 
@@ -511,7 +484,6 @@
   const ctx = conf.getContext("2d");
   let confOn=false;
   let pieces=[];
-
   function resizeConf(){
     conf.width = window.innerWidth * devicePixelRatio;
     conf.height = window.innerHeight * devicePixelRatio;
@@ -520,7 +492,6 @@
     ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
   }
   window.addEventListener("resize", resizeConf);
-
   function startConfetti(){
     resizeConf();
     conf.style.display="block";
@@ -559,12 +530,11 @@
     requestAnimationFrame(tickConfetti);
   }
 
-  /* ===== Local history (AI only) ===== */
+  /* History (AI only) */
   function pushHistory(){
     history.push(structuredClone(game));
     $("#undoBtn").disabled = history.length<=1 || mode==="ONLINE";
   }
-
   function undo(){
     if(mode==="ONLINE") return;
     if(history.length<=1) return;
@@ -575,10 +545,9 @@
     setStatus("Geri alındı. Sıra sende.");
   }
 
-  /* ===== Click handling ===== */
+  /* Commit */
   async function commit(next){
     if(!next) return;
-
     game = next;
     selected = null;
 
@@ -588,33 +557,29 @@
     }else{
       pushHistory();
       render();
-      // AI turn?
       if(game.winner){
         showEnd(game.winner===myPlayer());
         return;
       }
       await maybeAIMove();
     }
-    render();
 
-    if(game.winner){
-      showEnd(game.winner===myPlayer());
-    }
+    render();
+    if(game.winner) showEnd(game.winner===myPlayer());
   }
 
+  /* Click */
   async function onClickPos(i){
     if(game.winner) return;
 
     const me = myPlayer();
     const opp = oppPlayer();
 
-    // must be my turn or capture by me
     if(game.capture){
       if(game.capture.by !== me){
         setStatus("Taş alma sırası sende değil.");
         return;
       }
-      // capture attempt
       const next = applyCapture(game, me, i);
       if(!next){
         setStatus("Geçersiz taş alma. (Değirmende olmayan taş seç.)");
@@ -630,7 +595,6 @@
       return;
     }
 
-    // placing
     if(phaseOf(game,me)==="placing"){
       const next = applyPlace(game, me, i);
       if(!next){
@@ -638,15 +602,11 @@
         return;
       }
       await commit(next);
-      if(next.capture){
-        setStatus("Değirmen yaptın! Rakibin bir taşını kaldır.");
-      }else{
-        setStatus("Hamle yapıldı.");
-      }
+      if(next.capture) setStatus("Değirmen yaptın! Rakibin bir taşını kaldır.");
+      else setStatus("Hamle yapıldı.");
       return;
     }
 
-    // moving: select stone or move
     if(game.board[i]===me){
       selected = (selected===i ? null : i);
       render();
@@ -662,25 +622,50 @@
       const from = selected;
       const next = applyMove(game, me, from, i);
       if(!next){
-        setStatus("Geçersiz hamle. (Komşu olmalı / ya da uçma / aynı hamle yasak.)");
+        setStatus("Geçersiz hamle. (Komşu olmalı / uçma / aynı hamle yasak.)");
         return;
       }
       await commit(next);
-      if(next.capture){
-        setStatus("Değirmen yaptın! Rakibin bir taşını kaldır.");
-      }else{
-        setStatus("Hamle yapıldı.");
-      }
+      if(next.capture) setStatus("Değirmen yaptın! Rakibin bir taşını kaldır.");
+      else setStatus("Hamle yapıldı.");
     }
   }
 
-  /* ===== AI ===== */
+  /* =========================
+     STRONG AI
+     ========================= */
+  function countMills(board, p){
+    return MILLS.filter(m => m.every(i => board[i]===p)).length;
+  }
+  function potentialMills(board, p){
+    let c=0;
+    for(const m of MILLS){
+      let pc=0, ec=0;
+      for(const i of m){
+        if(board[i]===p) pc++;
+        else if(board[i]===null) ec++;
+      }
+      if(pc===2 && ec===1) c++;
+    }
+    return c;
+  }
+  function mobility(state, p){
+    const ph = phaseOf(state,p);
+    if(ph==="placing") return 0;
+    if(canFly(state,p)) return state.board.filter(v=>v===null).length;
+    let moves=0;
+    for(let i=0;i<24;i++){
+      if(state.board[i]!==p) continue;
+      moves += ADJ[i].filter(j => state.board[j]===null).length;
+    }
+    return moves;
+  }
+
   function generateAllActions(state, p){
     const actions = [];
     const ph = phaseOf(state,p);
 
     if(state.capture){
-      // capture actions
       if(state.capture.by !== p) return actions;
       for(const cap of state.capture.removable){
         actions.push({type:'capture', cap});
@@ -696,10 +681,10 @@
       return actions;
     }
 
-    // moving
     const fly = canFly(state,p);
     for(let from=0; from<24; from++){
       if(state.board[from]!==p) continue;
+
       const targets = fly
         ? state.board.map((v,i)=> v===null ? i : -1).filter(x=>x>=0)
         : ADJ[from].filter(to => state.board[to]===null);
@@ -719,53 +704,61 @@
     return null;
   }
 
-  function evalState(state){
-    // basit ama stabil bir değerlendirme
-    const w = countOnBoard(state.board,'W');
-    const b = countOnBoard(state.board,'B');
+  function evalStateStrong(state){
+    const b = state.board;
 
     if(state.winner==='B') return  1e9;
     if(state.winner==='W') return -1e9;
 
-    const millsW = MILLS.filter(m => m.every(i => state.board[i]==='W')).length;
-    const millsB = MILLS.filter(m => m.every(i => state.board[i]==='B')).length;
+    const w = countOnBoard(b,'W');
+    const bl = countOnBoard(b,'B');
 
-    const material = (b - w) * 100;
-    const millsScore = (millsB - millsW) * 60;
+    const millsW = countMills(b,'W');
+    const millsB = countMills(b,'B');
 
-    // mobilite
-    const mob = (p)=>{
-      const ph = phaseOf(state,p);
-      if(ph==="placing") return 0;
-      if(canFly(state,p)) return state.board.filter(v=>v===null).length;
-      let moves=0;
+    const potW = potentialMills(b,'W');
+    const potB = potentialMills(b,'B');
+
+    const mobW = mobility(state,'W');
+    const mobB = mobility(state,'B');
+
+    let score = (bl - w) * 140;
+    score += (millsB - millsW) * 95;
+    score += (potB - potW) * 28;
+    score += (mobB - mobW) * 6;
+
+    const good = new Set([1,4,7,10,13,16,19,22,9,14,3,5,18,20]);
+    if(state.placed.B < 9){
+      let gb=0, gw=0;
       for(let i=0;i<24;i++){
-        if(state.board[i]!==p) continue;
-        moves += ADJ[i].filter(j=>state.board[j]===null).length;
+        if(!good.has(i)) continue;
+        if(b[i]==='B') gb++;
+        if(b[i]==='W') gw++;
       }
-      return moves;
-    };
-    const mobScore = (mob('B') - mob('W')) * 4;
-
-    return material + millsScore + mobScore;
+      score += (gb - gw) * 10;
+    }
+    return score;
   }
 
-  function minimax(state, depth, alpha, beta, maximizingForB){
-    if(depth===0 || state.winner) return {score: evalState(state), action:null};
+  function minimaxStrong(state, depth, alpha, beta, maximizingForB){
+    if(depth===0 || state.winner) return {score: evalStateStrong(state), action:null};
 
     const p = maximizingForB ? 'B' : 'W';
     let actions = generateAllActions(state,p);
-    if(!actions.length) return {score: evalState(state), action:null};
+    if(!actions.length) return {score: evalStateStrong(state), action:null};
 
-    // capture varsa öncelik
-    const capFirst = actions.filter(a=>a.type==='capture');
-    if(capFirst.length) actions = capFirst;
+    const cap = actions.filter(a=>a.type==='capture');
+    if(cap.length) actions = cap;
 
-    // küçük sıralama: önce move/capture, sonra place
     actions.sort((a,b)=>{
-      const sa = (a.type==='capture'?1000:0) + (a.type==='move'?20:0);
-      const sb = (b.type==='capture'?1000:0) + (b.type==='move'?20:0);
-      return sb-sa;
+      const rank = (x)=>{
+        let r=0;
+        if(x.type==='capture') r+=1000;
+        if(x.type==='move') r+=60;
+        if(x.type==='place') r+=30;
+        return r;
+      };
+      return rank(b)-rank(a);
     });
 
     let bestAction=null;
@@ -775,7 +768,7 @@
       for(const act of actions){
         const next = simulate(state,'B',act);
         if(!next) continue;
-        const res = minimax(next, depth-1, alpha, beta, false);
+        const res = minimaxStrong(next, depth-1, alpha, beta, false);
         if(res.score>best){ best=res.score; bestAction=act; }
         alpha = Math.max(alpha,best);
         if(beta<=alpha) break;
@@ -786,7 +779,7 @@
       for(const act of actions){
         const next = simulate(state,'W',act);
         if(!next) continue;
-        const res = minimax(next, depth-1, alpha, beta, true);
+        const res = minimaxStrong(next, depth-1, alpha, beta, true);
         if(res.score<best){ best=res.score; bestAction=act; }
         beta = Math.min(beta,best);
         if(beta<=alpha) break;
@@ -801,13 +794,20 @@
     if(game.turn!=='B') return;
 
     setStatus("AI düşünüyor...");
-    await sleep(160);
+    await sleep(180);
 
-    // Eğer AI'ın capture sırasıysa, direkt taş al
+    // capture
     if(game.capture && game.capture.by==='B'){
       const caps = game.capture.removable;
-      const cap = caps[0];
-      const next = applyCapture(game,'B',cap);
+      let bestCap = caps[0];
+      let bestScore = -Infinity;
+      for(const cap of caps){
+        const next = applyCapture(game,'B',cap);
+        if(!next) continue;
+        const sc = evalStateStrong(next);
+        if(sc > bestScore){ bestScore = sc; bestCap = cap; }
+      }
+      const next = applyCapture(game,'B',bestCap);
       if(next){
         game = next; pushHistory(); render();
         if(game.winner) showEnd(false);
@@ -818,56 +818,58 @@
 
     const ph = phaseOf(game,'B');
 
-    // placing aşamasında rastgele iyi seçenek
     if(ph==="placing"){
       const actions = generateAllActions(game,'B');
       const scored = actions.map(a=>{
         const s2 = simulate(game,'B',a);
-        return {a, sc: s2 ? evalState(s2) : -1e15};
+        return {a, sc: s2 ? evalStateStrong(s2) : -1e15};
       }).sort((x,y)=> y.sc - x.sc);
-      const top = scored.slice(0, Math.min(6, scored.length)).map(x=>x.a);
+
+      const top = scored.slice(0, Math.min(4, scored.length)).map(x=>x.a);
       const act = pickRandom(top);
-      const next = simulate(game,'B',act);
+      const next = act ? simulate(game,'B',act) : null;
+
       if(next){
         game = next; pushHistory(); render();
-        if(game.capture && game.capture.by==='B') await maybeAIMove(); // capture immediately
-        else if(game.winner) showEnd(false);
+        if(game.capture && game.capture.by==='B') return maybeAIMove();
+        if(game.winner) showEnd(false);
         else setStatus("AI hamle yaptı. Sıra sende.");
       }
       return;
     }
 
-    // moving: minimax
-    const {action} = minimax(game, 4, -Infinity, Infinity, true);
+    const bCount = countOnBoard(game.board,'B');
+    const depth = (bCount<=3) ? 4 : 5;
+
+    const {action} = minimaxStrong(game, depth, -Infinity, Infinity, true);
     const act = action || pickRandom(generateAllActions(game,'B'));
     const next = act ? simulate(game,'B',act) : null;
+
     if(next){
       game = next; pushHistory(); render();
-      if(game.capture && game.capture.by==='B') await maybeAIMove(); // capture immediately
-      else if(game.winner) showEnd(false);
+      if(game.capture && game.capture.by==='B') return maybeAIMove();
+      if(game.winner) showEnd(false);
       else setStatus("AI hamle yaptı. Sıra sende.");
     }else{
-      // emniyet
       game.winner = 'W';
       render();
       showEnd(true);
     }
   }
 
-  /* ===== Hint (AI) ===== */
   function hint(){
     if(mode!=="AI") return;
     if(game.winner) return;
     if(game.turn!==myPlayer()) return;
     if(game.capture) { setStatus("Önce taş alman gerekiyor."); return; }
 
-    const {action} = minimax(game, 3, -Infinity, Infinity, false);
+    const {action} = minimaxStrong(game, 3, -Infinity, Infinity, false);
     if(!action){ setStatus("İpucu bulunamadı."); return; }
     if(action.type==='place') setStatus(`İpucu: ${action.to+1}. noktaya taş koy.`);
     if(action.type==='move') setStatus(`İpucu: ${action.from+1} → ${action.to+1}.`);
   }
 
-  /* ===== Start AI / Online ===== */
+  /* Start AI / Online */
   function openGameUI(){
     $("#loginCard").style.display="none";
     $("#gameUI").style.display="grid";
@@ -951,12 +953,6 @@
 
     await logSession({mode:"ONLINE_JOIN", roomId});
 
-    const data = snap.data();
-    if(data.guest && data.guest.name){
-      // oda doluysa bile yine girilebilir (istersen engelleriz)
-      $("#onlineHint").textContent = "Uyarı: Oda dolu görünüyor. Yine de deniyorsan devam.";
-    }
-
     await updateDoc(r, {
       guest: { name: info.name, classroom: info.classroom, joinedAt: serverTimestamp() },
       updatedAt: serverTimestamp()
@@ -1008,14 +1004,13 @@
       const host = data.host?.name ? "Host: " + data.host.name : "Host: —";
       const guest = data.guest?.name ? "Guest: " + data.guest.name : "Guest: bekleniyor…";
       $("#onlineState").textContent = data.guest?.name ? "Hazır" : "Rakip bekleniyor…";
-      $("#roomLabel").textContent = roomId + " • " + host + " • " + guest;
+      $("#roomLabel").textContent = (roomId || "—") + " • " + host + " • " + guest;
     }, (err)=>{
       console.error(err);
       setStatus("Online dinleme hatası. Firestore kurallarını kontrol et.");
     });
   }
 
-  /* ===== New game ===== */
   async function newGame(){
     hideEnd();
 
@@ -1026,7 +1021,6 @@
       return;
     }
 
-    // online new game only host
     if(role!=="HOST"){
       setStatus("Online’da yeni oyunu Host başlatır.");
       return;
@@ -1041,7 +1035,6 @@
   $("#undoBtn").addEventListener("click", undo);
   $("#hintBtn").addEventListener("click", hint);
 
-  // initial UI
   render();
   setLoginMsg("");
 </script>
