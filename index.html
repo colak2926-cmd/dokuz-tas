@@ -260,11 +260,14 @@ function hasAnyLegalMove(state, p){
 function checkWinner(state){
   const wCount = countOnBoard(state.board,'W');
   const bCount = countOnBoard(state.board,'B');
+  // Taşlar bittiyse ama hamle yapılabiliyorsa oyun devam etmeli
+if (state.placed.W >= 9 && hasAnyLegalMove(state,'W')) {
+  return null;
+}
   if(state.placed.W>=9 && (wCount<3 || !hasAnyLegalMove(state,'W'))) return 'B';
   if(state.placed.B>=9 && (bCount<3 || !hasAnyLegalMove(state,'B'))) return 'W';
   return null;
 }
-
 /* ====== AI: hareket üretme + minimax ====== */
 function generateActions(state, p){
   const opp = p==='W' ? 'B' : 'W';
@@ -456,6 +459,10 @@ function updateKPI(){
 
   const phase = (game.placed.W<9 || game.placed.B<9) ? "Taş koyma" : "Hareket";
   $("#phasePill").textContent = "Aşama: " + phase;
+  // Taş koyma bittiyse oyun hareket aşamasına geçer
+if (game.placed.W >= 9 && game.placed.B >= 9) {
+  setStatus("Taş koyma bitti. Artık taşlarını hareket ettirebilirsin.");
+}
 }
 
 function render(){
