@@ -38,11 +38,11 @@
     .pos:hover{ stroke:#6e84ff; }
     .pos.empty{ cursor:pointer; }
 
-    /* ✅ RENKLER */
-    .stoneW{ fill:#f59e0b; stroke:#ffd08a; stroke-width:3; }     /* Sen: Turuncu */
-    .stoneB{ fill:#0b3a8a; stroke:#7aa2ff; stroke-width:3; }     /* AI: Lacivert */
+    /* Renkler */
+    .stoneW{ fill:#f59e0b; stroke:#ffd08a; stroke-width:3; }  /* Sen: Turuncu */
+    .stoneB{ fill:#0b3a8a; stroke:#7aa2ff; stroke-width:3; }  /* AI: Lacivert */
 
-    /* ✅ TELEFON DOKUNMA SORUNU ÇÖZÜMÜ */
+    /* Telefonda tıklama sorunu */
     .stoneW, .stoneB { pointer-events: none; }
 
     .sel{ stroke:#ffd166; stroke-width:5; }
@@ -126,6 +126,18 @@
   </div>
 </div>
 
+<!-- ✅ Oyun Bitti Penceresi -->
+<div id="endOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); align-items:center; justify-content:center; z-index:9999;">
+  <div style="background:#121a33; border:1px solid #2a3570; border-radius:16px; padding:18px; width:min(92vw,420px);">
+    <div id="endTitle" style="font-size:18px; font-weight:800; color:#e9edff; margin-bottom:8px;">Oyun Bitti</div>
+    <div id="endText" style="color:#b9c2ff; line-height:1.4; margin-bottom:14px;"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button id="endCloseBtn">Kapat</button>
+      <button id="endNewBtn">Yeni Oyun</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 /* ========= Firebase (kayıt) ========= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -144,6 +156,20 @@ const db = getFirestore(app);
 
 const $ = s => document.querySelector(s);
 const setLoginMsg = (t)=> $("#loginMsg").textContent = t;
+
+function showEndOverlay(winner){
+  const won = winner === 'W';
+  $("#endTitle").textContent = "Oyun Bitti";
+  $("#endText").textContent = won
+    ? "Tebrikler! Kazandınız 🟠"
+    : "Oyun bitti. Rakip kazandı 🔵";
+  $("#endOverlay").style.display = "flex";
+}
+function hideEndOverlay(){ $("#endOverlay").style.display = "none"; }
+document.addEventListener("click", (e)=>{
+  if(e.target?.id === "endCloseBtn") hideEndOverlay();
+  if(e.target?.id === "endNewBtn"){ hideEndOverlay(); newGame(); }
+});
 
 /* ========= Tahta verileri ========= */
 const POS = [
@@ -170,12 +196,11 @@ const MILLS = [
 const positionsG = document.getElementById("positions");
 
 /* ========= AI anti-tekrar / anti-geri ========= */
-let lastAIMove = null;        // {type:'move', from, to} (sadece hareket aşamasında)
-let lastBoardKeyB = null;     // AI için bir önceki durum (çok basit tekrar önlemi)
+let lastAIMove = null;
+let lastBoardKeyB = null;
 
-/* ✅ OYUNCU anti-geri (sen A→B yaptıysan, sonraki tur B→A yasak) */
-let lastHumanMove = null;     // {type:'move', from, to}
-
+/* ✅ Oyuncu anti-geri */
+let lastHumanMove = null;
 function isReverseOfLastHuman(action){
   if(!lastHumanMove) return false;
   if(action.type !== 'move') return false;
@@ -183,7 +208,6 @@ function isReverseOfLastHuman(action){
 }
 
 function randInt(n){
-  // Crypto varsa onu kullan (daha sağlam random)
   if (window.crypto && crypto.getRandomValues) {
     const a = new Uint32Array(1);
     crypto.getRandomValues(a);
@@ -191,13 +215,8 @@ function randInt(n){
   }
   return Math.floor(Math.random() * n);
 }
-function pickRandom(arr){
-  return arr[arr.length ? randInt(arr.length) : 0];
-}
-function boardKey(board){
-  // basit hash: 24 hücreyi birleştir (null = '.')
-  return board.map(x=> x===null ? '.' : x).join('');
-}
+function pickRandom(arr){ return arr[arr.length ? randInt(arr.length) : 0]; }
+function boardKey(board){ return board.map(x=> x===null ? '.' : x).join(''); }
 function isReverseOfLastAI(action){
   if(!lastAIMove) return false;
   if(action.type !== 'move') return false;
@@ -220,7 +239,8 @@ function newGame(){
   history = [];
   lastAIMove = null;
   lastBoardKeyB = null;
-  lastHumanMove = null; /* ✅ */
+  lastHumanMove = null;
+  hideEndOverlay();
   pushHistory();
   render();
   setStatus("Sıra sende. Boş bir noktaya taş koy.");
@@ -235,18 +255,17 @@ function undo(){
   if(history.length <= 1) return;
   history.pop();
   game = JSON.parse(JSON.stringify(history[history.length-1]));
-  // undo sonrası AI tekrarlarına takılmasın diye hafızayı sıfırla
   lastAIMove = null;
   lastBoardKeyB = null;
-  lastHumanMove = null; /* ✅ undo sonrası senin geri yasağını da sıfırlayalım */
+  lastHumanMove = null;
+  hideEndOverlay();
   render();
   setStatus("Geri alındı. Sıra: " + (game.turn==='W' ? "Sen" : "AI"));
 }
 
 function countOnBoard(board, p){ return board.filter(x=>x===p).length; }
 function phaseOf(state, p){ return state.placed[p] < 9 ? "placing" : "moving"; }
-
-/* ✅ UÇMA KURALI RESMÎ: sadece 3 taş kalınca */
+/* ✅ Resmî uçma: sadece 3 taş kalınca */
 function canFly(state, p){ return phaseOf(state,p)==="moving" && countOnBoard(state.board,p) === 3; }
 
 function millsFormedBy(board, p, posIndex){
@@ -275,16 +294,12 @@ function hasAnyLegalMove(state, p){
   return false;
 }
 
-/* ✅ Kazanma sadece hareket aşamasında kontrol edilir */
 function checkWinner(state){
   if (state.placed.W < 9 || state.placed.B < 9) return null;
-
   const wCount = countOnBoard(state.board,'W');
   const bCount = countOnBoard(state.board,'B');
-
   if (wCount < 3 || !hasAnyLegalMove(state,'W')) return 'B';
   if (bCount < 3 || !hasAnyLegalMove(state,'B')) return 'W';
-
   return null;
 }
 
@@ -399,7 +414,6 @@ function evalState(state){
 
   if(state.winner==='B') return 1e9;
   if(state.winner==='W') return -1e9;
-
   return material + millsScore + potScore + mobScore;
 }
 
@@ -441,38 +455,28 @@ function minimax(state, depth, alpha, beta, maximizingForB){
   }
 }
 
-/* ✅ AI seçim stratejisi:
-   - Yerleştirme aşamasında: "en iyi N hamleden rastgele seç" (her oyun farklı başlar)
-   - Hareket aşamasında: minimax ama "geri hamleyi" yasakla ve "aynı konumu" tekrar etmeyi azalt
-*/
 function aiPickAction(){
   const phase = phaseOf(game,'B');
   const depth = phase==="placing" ? 3 : 4;
 
-  // Yerleştirmede rastgelelik: en iyi 6 hamleden birini seç
   if(phase==="placing"){
     const actions = generateActions(game,'B');
-    // hızlı puanla (tek adım eval)
     const scored = actions.map(a=>{
       const s2 = applyAction(game,'B',a);
       return {a, score: evalState(s2)};
     }).sort((x,y)=> y.score - x.score);
-
     const topN = scored.slice(0, Math.min(6, scored.length)).map(x=>x.a);
     return pickRandom(topN);
   }
 
-  // Hareket aşaması: minimax
   let {action} = minimax(game, depth, -Infinity, Infinity, true);
   if(!action) return null;
 
-  // geri hamleyi yasakla
   if(isReverseOfLastAI(action)){
     const alts = generateActions(game,'B')
       .filter(a => !(a.type==='move' && isReverseOfLastAI(a)))
       .map(a=>{
         const s2 = applyAction(game,'B',a);
-        // tekrar konumuna küçük ceza
         let sc = evalState(s2);
         const key = boardKey(s2.board);
         if(lastBoardKeyB && key === lastBoardKeyB) sc -= 120;
@@ -481,11 +485,9 @@ function aiPickAction(){
       .sort((x,y)=> y.sc - x.sc)
       .slice(0, 6)
       .map(x=>x.a);
-
     if(alts.length) action = pickRandom(alts);
   }
 
-  // aynı konuma dönmeyi azalt (çok basit)
   const sTry = applyAction(game,'B',action);
   const keyTry = boardKey(sTry.board);
   if(lastBoardKeyB && keyTry === lastBoardKeyB){
@@ -503,7 +505,6 @@ function aiPickAction(){
       .map(x=>x.a);
     if(alts2.length) action = pickRandom(alts2);
   }
-
   return action;
 }
 
@@ -518,7 +519,8 @@ function aiMove(){
     if(!action){
       game.winner = checkWinner(game) || 'W';
       render();
-      setStatus("AI hamle bulamadı. Kazanan: " + (game.winner==='W' ? "Sen" : "AI"));
+      setStatus("Oyun bitti.");
+      showEndOverlay(game.winner);
       return;
     }
 
@@ -527,14 +529,14 @@ function aiMove(){
     pushHistory();
     render();
 
-    // AI hafıza güncelle
     if(action.type === 'move') lastAIMove = {type:'move', from: action.from, to: action.to};
     else lastAIMove = null;
 
-    lastBoardKeyB = beforeKey; // bir önceki durum (döngü azaltma için)
+    lastBoardKeyB = beforeKey;
 
     if(game.winner){
-      setStatus("Oyun bitti. Kazanan: " + (game.winner==='W' ? "Sen" : "AI"));
+      setStatus("Oyun bitti.");
+      showEndOverlay(game.winner);
     }else{
       setStatus(action.millMade ? "AI değirmen yaptı ve 1 taşını kaldırdı. Sıra sende." : "AI hamle yaptı. Sıra sende.");
     }
@@ -579,7 +581,6 @@ function render(){
       s.classList.add("glow");
       g.appendChild(s);
     }
-
     positionsG.appendChild(g);
   }
 
@@ -593,7 +594,8 @@ function humanAction(action){
   render();
 
   if(game.winner){
-    setStatus("Oyun bitti. Kazanan: " + (game.winner==='W' ? "Sen" : "AI"));
+    setStatus("Oyun bitti.");
+    showEndOverlay(game.winner);
     return;
   }
 
@@ -612,7 +614,6 @@ function onClickPos(i){
   const phase = phaseOf(game,'W');
   const opp = 'B';
 
-  // TAŞ ALMA MODU
   if(game.captureMode && game._temp){
     const {removable} = game._temp;
     if(b[i]!==opp) return;
@@ -623,7 +624,6 @@ function onClickPos(i){
     return;
   }
 
-  // TAŞ KOYMA
   if(phase==="placing"){
     if(b[i]!==null) return;
 
@@ -643,7 +643,6 @@ function onClickPos(i){
     return;
   }
 
-  // TAŞ SEÇ
   if(b[i]==='W'){
     game.pendingMover = (game.pendingMover===i ? null : i);
     render();
@@ -656,13 +655,11 @@ function onClickPos(i){
     return;
   }
 
-  // HEDEF (HAREKET/UÇMA)
   if(b[i]===null && game.pendingMover!==null){
     const from = game.pendingMover;
     const fly = canFly(game,'W');
     if(!fly && !ADJ[from].includes(i)) return;
 
-    /* ✅ Aynı hamleyi hemen geri alma ENGELİ */
     const candidate = { type:'move', from, to:i };
     if(isReverseOfLastHuman(candidate)){
       setStatus("Aynı hamleyi hemen geri alamazsın. Farklı bir hamle dene.");
@@ -675,10 +672,7 @@ function onClickPos(i){
 
     if(!millMade){
       game.pendingMover = null;
-
-      /* ✅ hamle kaydı */
       lastHumanMove = {type:'move', from, to:i};
-
       humanAction({type:'move', from, to:i, millMade:false, capture:null});
       return;
     }
@@ -686,10 +680,7 @@ function onClickPos(i){
     const removable = removableOpponentStones(b2, opp);
     setStatus("Değirmen yaptın! Rakibin bir taşına dokun.");
     game.captureMode = true;
-
-    /* ✅ hamle kaydı (değirmen olsa da kaydet) */
     lastHumanMove = {type:'move', from, to:i};
-
     game._temp = {type:'move', from, to:i, millMade:true, removable};
     game.pendingMover = null;
     render();
