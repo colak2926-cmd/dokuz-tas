@@ -1,39 +1,78 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Dokuz Taş – AI + Online (Odalı) + Zorluk</title>
+  <title>Düzce İsabet Okulları 9 Taş Oyunu</title>
+
   <style>
     :root{
-      --bg:#0b1020; --panel:#121a33; --line:#93a4ff55; --text:#e9edff; --muted:#b9c2ff;
+      /* Tema */
+      --bg:#0b1020; --panel:#121a33; --text:#e9edff; --muted:#b9c2ff;
       --btn:#0f1630; --btnb:#2a3570;
+
+      /* Taş renkleri */
       --orange:#f59e0b; --orange2:#ffd08a;
-      --navy:#0b3a8a; --navy2:#7aa2ff;
+      --navy:#0b3a8a;   --navy2:#7aa2ff;
+
+      /* Tahta çizgileri (turuncu / lacivert) */
+      --lineO: rgba(245, 158, 11, .55);
+      --lineN: rgba(122, 162, 255, .55);
+
+      --posFill:#0b1020;
+      --posStroke:#93a4ffcc;
+
+      --modal1:#16204a; --modal2:#0f1630;
+      --divider:#24306a;
     }
+
+    /* AÇIK TEMA */
+    html[data-theme="light"]{
+      --bg:#f6f7fb;
+      --panel:#ffffff;
+      --text:#0b1020;
+      --muted:#334155;
+      --btn:#f1f5f9;
+      --btnb:#cbd5e1;
+
+      --posFill:#f6f7fb;
+      --posStroke:#3b82f6aa;
+
+      --modal1:#ffffff;
+      --modal2:#f1f5f9;
+      --divider:#e2e8f0;
+
+      --lineO: rgba(245, 158, 11, .65);
+      --lineN: rgba(11, 58, 138, .45);
+    }
+
     *{box-sizing:border-box}
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
     .wrap{ max-width:1100px; margin:0 auto; padding:14px; display:flex; flex-direction:column; gap:12px; }
+
     .card{ background:var(--panel); border:1px solid var(--btnb); border-radius:16px; padding:14px; }
-    h1{ margin:0 0 8px 0; font-size:18px; font-weight:900; }
+    h1{ margin:0 0 8px 0; font-size:18px; font-weight:950; }
     .small{ font-size:12px; color:var(--muted); }
     .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
     .grid2{ display:grid; grid-template-columns: 1.35fr 1fr; gap:12px; }
     @media (max-width: 900px){ .grid2{ grid-template-columns:1fr; } }
+
     button{
       border:1px solid var(--btnb); background:var(--btn); color:var(--text);
-      padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800;
+      padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:850;
     }
     button:hover{ border-color:#4052b6; }
     button:disabled{ opacity:.55; cursor:not-allowed; }
+
     input{
       width:100%; border:1px solid var(--btnb); background:var(--btn); color:var(--text);
       padding:12px; border-radius:12px;
     }
     select{
       padding:10px 12px; border-radius:12px; border:1px solid var(--btnb);
-      background:var(--btn); color:var(--text); font-weight:800;
+      background:var(--btn); color:var(--text); font-weight:850;
     }
+
     .pill{
       display:inline-block; padding:6px 10px; border-radius:999px;
       background:var(--btn); border:1px solid var(--btnb); color:var(--muted); font-size:12px;
@@ -42,14 +81,17 @@
     .kpi{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
     .kpi > div{ background:var(--btn); border:1px solid var(--btnb); border-radius:12px; padding:10px; font-size:13px; color:var(--muted); }
     .kpi b{ color:var(--text); }
-    .divider{ height:1px; background:#24306a; margin:12px 0; }
+    .divider{ height:1px; background:var(--divider); margin:12px 0; }
 
+    /* Tahta */
     svg{ width:100%; height:auto; max-width:650px; }
-    .line{ stroke:var(--line); stroke-width:8; stroke-linecap:round; }
+    .lineO{ stroke:var(--lineO); stroke-width:10; stroke-linecap:round; }
+    .lineN{ stroke:var(--lineN); stroke-width:10; stroke-linecap:round; }
 
-    .pos{ fill:#0b1020; stroke:#93a4ffcc; stroke-width:5; opacity:.98; }
+    .pos{ fill:var(--posFill); stroke:var(--posStroke); stroke-width:5; opacity:.98; }
     .pos.empty{ cursor:pointer; }
     .pos.empty:hover{ stroke:#c7d2fe; }
+    html[data-theme="light"] .pos.empty:hover{ stroke:#1d4ed8aa; }
     .sel{ stroke:#ffd166 !important; stroke-width:6 !important; }
 
     .stoneW{ fill:var(--orange); stroke:var(--orange2); stroke-width:3; }
@@ -63,7 +105,7 @@
     }
     #modal{
       width:min(520px, 92vw);
-      background:linear-gradient(180deg,#16204a,#0f1630);
+      background:linear-gradient(180deg,var(--modal1),var(--modal2));
       border:1px solid #4052b6; border-radius:18px; padding:18px;
       box-shadow:0 18px 60px rgba(0,0,0,.45);
       text-align:center;
@@ -74,6 +116,15 @@
     .ok{ border-color:rgba(255,255,255,.25); background:#6ee7b7; color:#052016; }
     #confetti{ position:fixed; inset:0; pointer-events:none; z-index:60; display:none; }
     .warn{ color:#ffd166; }
+    html[data-theme="light"] .warn{ color:#b45309; }
+
+    .titleBar{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:6px;
+    }
+    .bigTitle{
+      font-size:18px; font-weight:950; margin:0;
+    }
   </style>
 </head>
 
@@ -94,8 +145,13 @@
   <div class="wrap">
     <!-- LOGIN -->
     <div class="card" id="loginCard">
-      <h1>Dokuz Taş – Giriş</h1>
-      <div class="small">İki seçenek var: <b>AI</b> (tek cihaz) veya <b>Online</b> (oda kodu ile iki kişi).</div>
+      <div class="titleBar">
+        <div>
+          <p class="bigTitle">Düzce İsabet Okulları 9 Taş Oyunu</p>
+          <div class="small">İki seçenek var: <b>AI</b> (tek cihaz) veya <b>Online</b> (oda kodu ile iki kişi).</div>
+        </div>
+        <button id="themeBtn" style="white-space:nowrap;">🌙 Koyu</button>
+      </div>
 
       <div style="height:10px"></div>
       <div class="row">
@@ -140,21 +196,32 @@
     <div class="grid2" id="gameUI" style="display:none">
       <div class="card" style="display:flex; align-items:center; justify-content:center;">
         <svg viewBox="0 0 1000 1000" aria-label="Dokuz taş tahtası">
-          <rect x="100" y="100" width="800" height="800" fill="none" class="line"/>
-          <rect x="250" y="250" width="500" height="500" fill="none" class="line"/>
-          <rect x="400" y="400" width="200" height="200" fill="none" class="line"/>
+          <!-- Dış kare (turuncu) -->
+          <rect x="100" y="100" width="800" height="800" fill="none" class="lineO"/>
+          <!-- Orta kare (lacivert) -->
+          <rect x="250" y="250" width="500" height="500" fill="none" class="lineN"/>
+          <!-- İç kare (turuncu) -->
+          <rect x="400" y="400" width="200" height="200" fill="none" class="lineO"/>
 
-          <line x1="500" y1="100" x2="500" y2="400" class="line"/>
-          <line x1="500" y1="600" x2="500" y2="900" class="line"/>
-          <line x1="100" y1="500" x2="400" y2="500" class="line"/>
-          <line x1="600" y1="500" x2="900" y2="500" class="line"/>
+          <!-- Bağlantılar: üst-alt turuncu, sağ-sol lacivert -->
+          <line x1="500" y1="100" x2="500" y2="400" class="lineO"/>
+          <line x1="500" y1="600" x2="500" y2="900" class="lineO"/>
+          <line x1="100" y1="500" x2="400" y2="500" class="lineN"/>
+          <line x1="600" y1="500" x2="900" y2="500" class="lineN"/>
 
           <g id="positions"></g>
         </svg>
       </div>
 
       <div class="card">
-        <h1>Dokuz Taş – Oyun Paneli</h1>
+        <div class="titleBar">
+          <div>
+            <p class="bigTitle">Düzce İsabet Okulları 9 Taş Oyunu</p>
+            <div class="small">Resmî kurallar • AI + Online</div>
+          </div>
+          <button id="themeBtn2" style="white-space:nowrap;">🌙 Koyu</button>
+        </div>
+
         <div class="row">
           <span class="pill" id="whoOrange">Turuncu: —</span>
           <span class="pill" id="whoNavy">Lacivert: —</span>
@@ -175,7 +242,6 @@
           <button id="hintBtn">İpucu</button>
         </div>
 
-        <!-- ✅ SADECE AI MODUNDA GÖRÜNECEK -->
         <div class="row" id="aiDifficultyRow" style="margin-top:10px; display:none;">
           <span class="pill">Zorluk</span>
           <select id="difficulty">
@@ -205,23 +271,34 @@
   </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import {
-    getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot,
-    collection, addDoc, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  /* ==========================
+     TEMA (Açık/Koyu)
+  ========================== */
+  const themeBtn = document.getElementById("themeBtn");
+  const themeBtn2 = document.getElementById("themeBtn2");
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
-    authDomain: "oyun-3bfba.firebaseapp.com",
-    projectId: "oyun-3bfba",
-    storageBucket: "oyun-3bfba.firebasestorage.app",
-    messagingSenderId: "120738565998",
-    appId: "1:120738565998:web:81876d89cafa64a1207b7f"
+  function applyTheme(t){
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("theme", t);
+    const label = (t==="dark") ? "🌙 Koyu" : "☀️ Açık";
+    if(themeBtn) themeBtn.textContent = label;
+    if(themeBtn2) themeBtn2.textContent = label;
+  }
+  function toggleTheme(){
+    const cur = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(cur==="dark" ? "light" : "dark");
+  }
+  applyTheme(localStorage.getItem("theme") || "dark");
+  themeBtn?.addEventListener("click", toggleTheme);
+  themeBtn2?.addEventListener("click", toggleTheme);
+
+  /* ==========================
+     STRUCTURED CLONE fallback
+  ========================== */
+  const clone = (obj) => {
+    if (typeof structuredClone === "function") return structuredClone(obj);
+    return JSON.parse(JSON.stringify(obj));
   };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
 
   const $ = s => document.querySelector(s);
   const sleep = ms => new Promise(r=>setTimeout(r,ms));
@@ -247,6 +324,48 @@
     return s;
   }
 
+  /* ==========================
+     Firebase (LAZY LOAD)
+     - Sayfa Firebase hatası olsa bile açılır
+     - Online modda gerektiğinde yüklenir
+  ========================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
+    authDomain: "oyun-3bfba.firebaseapp.com",
+    projectId: "oyun-3bfba",
+    storageBucket: "oyun-3bfba.firebasestorage.app",
+    messagingSenderId: "120738565998",
+    appId: "1:120738565998:web:81876d89cafa64a1207b7f"
+  };
+
+  let fb = null; // { app, db, ...fns }
+
+  async function ensureFirebase(){
+    if(fb) return fb;
+
+    const appMod = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
+    const fsMod  = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+
+    const app = appMod.initializeApp(firebaseConfig);
+    const db  = fsMod.getFirestore(app);
+
+    fb = {
+      db,
+      doc: fsMod.doc,
+      setDoc: fsMod.setDoc,
+      getDoc: fsMod.getDoc,
+      updateDoc: fsMod.updateDoc,
+      onSnapshot: fsMod.onSnapshot,
+      collection: fsMod.collection,
+      addDoc: fsMod.addDoc,
+      serverTimestamp: fsMod.serverTimestamp
+    };
+    return fb;
+  }
+
+  /* ==========================
+     OYUN VERİLERİ
+  ========================== */
   const POS = [
     [100,100],[500,100],[900,100],
     [250,250],[500,250],[750,250],
@@ -293,9 +412,6 @@
   function myPlayer(){
     if(mode==="AI") return 'W';
     return role==="HOST" ? 'W' : 'B';
-  }
-  function oppPlayer(){
-    return myPlayer()==='W' ? 'B' : 'W';
   }
 
   function countOnBoard(b,p){ return b.filter(x=>x===p).length; }
@@ -356,7 +472,7 @@
     if(state.turn!==p) return null;
     if(state.board[to]!==null) return null;
 
-    const s = structuredClone(state);
+    const s = clone(state);
     s.board[to]=p;
     s.placed[p]++;
 
@@ -385,7 +501,7 @@
 
     if(violatesRepeat(state,p,from,to)) return null;
 
-    const s = structuredClone(state);
+    const s = clone(state);
     s.board[from]=null;
     s.board[to]=p;
     rememberMove(s,p,from,to);
@@ -408,7 +524,7 @@
     if(state.capture.by !== p) return null;
     if(state.turn !== p) return null;
 
-    const s = structuredClone(state);
+    const s = clone(state);
     const opp = p==='W'?'B':'W';
 
     if(s.board[capIndex]!==opp) return null;
@@ -434,7 +550,6 @@
     $("#undoBtn").disabled = (mode==="ONLINE") || history.length<=1 || !!game.winner;
     $("#hintBtn").disabled = (mode!=="AI") || (game.turn!==myPlayer()) || !!game.winner || !!game.capture;
 
-    // ✅ sadece AI modunda zorluk satırı görünsün
     const row = document.getElementById("aiDifficultyRow");
     if(row) row.style.display = (mode==="AI") ? "flex" : "none";
   }
@@ -554,14 +669,14 @@
 
   /* History (AI only) */
   function pushHistory(){
-    history.push(structuredClone(game));
+    history.push(clone(game));
     $("#undoBtn").disabled = history.length<=1 || mode==="ONLINE";
   }
   function undo(){
     if(mode==="ONLINE") return;
     if(history.length<=1) return;
     history.pop();
-    game = structuredClone(history[history.length-1]);
+    game = clone(history[history.length-1]);
     selected = null;
     render();
     setStatus("Geri alındı. Sıra sende.");
@@ -574,6 +689,7 @@
     selected = null;
 
     if(mode==="ONLINE"){
+      const { db, doc, updateDoc, serverTimestamp } = await ensureFirebase();
       const r = doc(db,"rooms",roomId);
       await updateDoc(r, { game, updatedAt: serverTimestamp() });
     }else{
@@ -654,7 +770,7 @@
 
   /* =========================
      STRONG AI + ZORLUK
-     ========================= */
+  ========================== */
   function countMills(board, p){
     return MILLS.filter(m => m.every(i => board[i]===p)).length;
   }
@@ -771,17 +887,6 @@
     const cap = actions.filter(a=>a.type==='capture');
     if(cap.length) actions = cap;
 
-    actions.sort((a,b)=>{
-      const rank = (x)=>{
-        let r=0;
-        if(x.type==='capture') r+=1000;
-        if(x.type==='move') r+=60;
-        if(x.type==='place') r+=30;
-        return r;
-      };
-      return rank(b)-rank(a);
-    });
-
     let bestAction=null;
 
     if(maximizingForB){
@@ -815,9 +920,8 @@
     if(game.turn!=='B') return;
 
     setStatus("AI düşünüyor...");
-    await sleep(180);
+    await sleep(160);
 
-    // capture
     if(game.capture && game.capture.by==='B'){
       const caps = game.capture.removable;
       let bestCap = caps[0];
@@ -838,12 +942,10 @@
     }
 
     const ph = phaseOf(game,'B');
-
-    // Zorluk: derinlik + hata payı
-    let depth;
-    let blunderRate; // kötü hamle seçme ihtimali
-
     const bCount = countOnBoard(game.board,'B');
+
+    let depth;
+    let blunderRate;
 
     if(difficulty==="easy"){
       depth = (bCount<=3) ? 2 : 3;
@@ -856,10 +958,11 @@
       blunderRate = 0.03;
     }
 
-    // placing: üst hamlelerden seç, kolayda daha çok hata
+    const allActs = generateAllActions(game,'B');
+
+    // placing: üst hamlelerden rastgele
     if(ph==="placing"){
-      const actions = generateAllActions(game,'B');
-      const scored = actions.map(a=>{
+      const scored = allActs.map(a=>{
         const s2 = simulate(game,'B',a);
         return {a, sc: s2 ? evalStateStrong(s2) : -1e15};
       }).sort((x,y)=> y.sc - x.sc);
@@ -869,14 +972,12 @@
       let act = pickRandom(scored.slice(0, topN).map(x=>x.a));
 
       if(Math.random() < blunderRate && scored.length>6){
-        // kolay/orta: biraz aşağıdan seçsin
         const idxStart = (difficulty==="easy") ? Math.floor(scored.length*0.35) : Math.floor(scored.length*0.20);
         const slice = scored.slice(idxStart, Math.min(scored.length, idxStart+6)).map(x=>x.a);
         act = pickRandom(slice) || act;
       }
 
       const next = act ? simulate(game,'B',act) : null;
-
       if(next){
         game = next; pushHistory(); render();
         if(game.capture && game.capture.by==='B') return maybeAIMove();
@@ -886,8 +987,7 @@
       return;
     }
 
-    // moving: minimax + (kolay/orta) bazen kötü hamle
-    const allActs = generateAllActions(game,'B');
+    // moving: minimax + bazen hata
     const {action} = minimaxStrong(game, depth, -Infinity, Infinity, true);
     let chosen = action;
 
@@ -929,7 +1029,6 @@
     if(action.type==='move') setStatus(`İpucu: ${action.from+1} → ${action.to+1}.`);
   }
 
-  /* Start AI / Online */
   function openGameUI(){
     $("#loginCard").style.display="none";
     $("#gameUI").style.display="grid";
@@ -937,14 +1036,20 @@
   }
 
   async function logSession(extra={}){
-    const name = $("#name").value.trim();
-    const classroom = $("#classroom").value.trim();
-    await addDoc(collection(db,"sessions"),{
-      name, classroom,
-      createdAt: serverTimestamp(),
-      userAgent: navigator.userAgent,
-      ...extra
-    });
+    // Firebase çalışmazsa oyun yine açılsın: sadece log atlamış olur.
+    try{
+      const { db, collection, addDoc, serverTimestamp } = await ensureFirebase();
+      const name = $("#name").value.trim();
+      const classroom = $("#classroom").value.trim();
+      await addDoc(collection(db,"sessions"),{
+        name, classroom,
+        createdAt: serverTimestamp(),
+        userAgent: navigator.userAgent,
+        ...extra
+      });
+    }catch(e){
+      console.warn("Session log atlanıyor:", e);
+    }
   }
 
   function validateLogin(){
@@ -972,6 +1077,9 @@
   async function createRoom(){
     const info = validateLogin();
     if(!info) return;
+
+    // Online için Firebase şart
+    const { db, doc, setDoc, serverTimestamp } = await ensureFirebase();
 
     mode="ONLINE"; role="HOST";
     roomId = makeRoomCode();
@@ -1001,6 +1109,9 @@
       setLoginMsg("Oda kodu gir.");
       return;
     }
+
+    // Online için Firebase şart
+    const { db, doc, getDoc, updateDoc, serverTimestamp } = await ensureFirebase();
 
     mode="ONLINE"; role="GUEST"; roomId=code;
 
@@ -1033,6 +1144,8 @@
   }));
 
   async function listenRoom(){
+    const { db, doc, onSnapshot } = await ensureFirebase();
+
     if(unsubRoom) { unsubRoom(); unsubRoom=null; }
     const r = doc(db,"rooms",roomId);
 
@@ -1042,7 +1155,7 @@
 
       if(data.game){
         game = data.game;
-        history = [structuredClone(game)];
+        history = [clone(game)];
         selected = null;
         render();
 
@@ -1086,6 +1199,7 @@
       return;
     }
 
+    const { db, doc, updateDoc, serverTimestamp } = await ensureFirebase();
     const r = doc(db,"rooms",roomId);
     await updateDoc(r, { game: freshGame(), updatedAt: serverTimestamp() });
     setStatus("Yeni oyun başlatıldı.");
@@ -1095,7 +1209,6 @@
   $("#undoBtn").addEventListener("click", undo);
   $("#hintBtn").addEventListener("click", hint);
 
-  // ✅ zorluk seçimi (AI)
   const diffEl = document.getElementById("difficulty");
   if(diffEl){
     diffEl.addEventListener("change",(e)=>{
