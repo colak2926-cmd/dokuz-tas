@@ -7,15 +7,12 @@
 
   <style>
     :root{
-      /* Tema */
       --bg:#0b1020; --panel:#121a33; --text:#e9edff; --muted:#b9c2ff;
       --btn:#0f1630; --btnb:#2a3570;
 
-      /* Taş renkleri */
       --orange:#f59e0b; --orange2:#ffd08a;
       --navy:#0b3a8a;   --navy2:#7aa2ff;
 
-      /* Tahta çizgileri (turuncu / lacivert) */
       --lineO: rgba(245, 158, 11, .55);
       --lineN: rgba(122, 162, 255, .55);
 
@@ -25,8 +22,6 @@
       --modal1:#16204a; --modal2:#0f1630;
       --divider:#24306a;
     }
-
-    /* AÇIK TEMA */
     html[data-theme="light"]{
       --bg:#f6f7fb;
       --panel:#ffffff;
@@ -83,7 +78,6 @@
     .kpi b{ color:var(--text); }
     .divider{ height:1px; background:var(--divider); margin:12px 0; }
 
-    /* Tahta */
     svg{ width:100%; height:auto; max-width:650px; }
     .lineO{ stroke:var(--lineO); stroke-width:10; stroke-linecap:round; }
     .lineN{ stroke:var(--lineN); stroke-width:10; stroke-linecap:round; }
@@ -98,7 +92,6 @@
     .stoneB{ fill:var(--navy); stroke:var(--navy2); stroke-width:3; }
     .stoneW, .stoneB{ pointer-events:none; }
 
-    /* End modal + confetti */
     #overlay{
       position:fixed; inset:0; display:none; align-items:center; justify-content:center;
       background:rgba(0,0,0,.55); z-index:50; padding:18px;
@@ -148,7 +141,7 @@
       <div class="titleBar">
         <div>
           <p class="bigTitle">Düzce İsabet Okulları 9 Taş Oyunu</p>
-          <div class="small">İki seçenek var: <b>AI</b> (tek cihaz) veya <b>Online</b> (oda kodu ile iki kişi).</div>
+          <div class="small">AI (tek cihaz) veya Online (oda adı ile iki kişi).</div>
         </div>
         <button id="themeBtn" style="white-space:nowrap;">🌙 Koyu</button>
       </div>
@@ -173,18 +166,18 @@
 
       <div class="divider"></div>
 
-      <!-- ONLINE -->
+      <!-- ONLINE (oda adını sen yazıyorsun) -->
       <div class="card" style="background:var(--btn);">
         <div class="row" style="align-items:flex-end">
           <div style="flex:1 1 220px">
-            <div class="small">Oda Kodu (varsa)</div>
-            <input id="roomCode" placeholder="Örn: QDW5U2">
+            <div class="small">Oda Adı (sen belirle)</div>
+            <input id="roomName" placeholder="Örn: 5A-MASA1 / ISABET-ODASI">
           </div>
           <button id="createRoomBtn">🌐 Oda Oluştur</button>
           <button id="joinRoomBtn">🌐 Odaya Gir</button>
         </div>
         <div class="small" style="margin-top:8px">
-          Odayı oluşturan kişi <b>Turuncu</b>, odaya giren kişi <b>Lacivert</b> olur.
+          Odayı oluşturan <b>Turuncu</b>, odaya giren <b>Lacivert</b> olur. Arkadaşın aynı oda adını yazmalı.
         </div>
         <div class="small warn" style="margin-top:8px" id="onlineHint"></div>
       </div>
@@ -196,14 +189,10 @@
     <div class="grid2" id="gameUI" style="display:none">
       <div class="card" style="display:flex; align-items:center; justify-content:center;">
         <svg viewBox="0 0 1000 1000" aria-label="Dokuz taş tahtası">
-          <!-- Dış kare (turuncu) -->
           <rect x="100" y="100" width="800" height="800" fill="none" class="lineO"/>
-          <!-- Orta kare (lacivert) -->
           <rect x="250" y="250" width="500" height="500" fill="none" class="lineN"/>
-          <!-- İç kare (turuncu) -->
           <rect x="400" y="400" width="200" height="200" fill="none" class="lineO"/>
 
-          <!-- Bağlantılar: üst-alt turuncu, sağ-sol lacivert -->
           <line x1="500" y1="100" x2="500" y2="400" class="lineO"/>
           <line x1="500" y1="600" x2="500" y2="900" class="lineO"/>
           <line x1="100" y1="500" x2="400" y2="500" class="lineN"/>
@@ -271,9 +260,7 @@
   </div>
 
 <script type="module">
-  /* ==========================
-     TEMA (Açık/Koyu)
-  ========================== */
+  /* Tema */
   const themeBtn = document.getElementById("themeBtn");
   const themeBtn2 = document.getElementById("themeBtn2");
 
@@ -281,8 +268,8 @@
     document.documentElement.setAttribute("data-theme", t);
     localStorage.setItem("theme", t);
     const label = (t==="dark") ? "🌙 Koyu" : "☀️ Açık";
-    if(themeBtn) themeBtn.textContent = label;
-    if(themeBtn2) themeBtn2.textContent = label;
+    themeBtn && (themeBtn.textContent = label);
+    themeBtn2 && (themeBtn2.textContent = label);
   }
   function toggleTheme(){
     const cur = document.documentElement.getAttribute("data-theme") || "dark";
@@ -292,43 +279,17 @@
   themeBtn?.addEventListener("click", toggleTheme);
   themeBtn2?.addEventListener("click", toggleTheme);
 
-  /* ==========================
-     STRUCTURED CLONE fallback
-  ========================== */
-  const clone = (obj) => {
-    if (typeof structuredClone === "function") return structuredClone(obj);
-    return JSON.parse(JSON.stringify(obj));
-  };
+  /* structuredClone fallback */
+  const clone = (obj) => (typeof structuredClone === "function") ? structuredClone(obj) : JSON.parse(JSON.stringify(obj));
 
   const $ = s => document.querySelector(s);
   const sleep = ms => new Promise(r=>setTimeout(r,ms));
   const setLoginMsg = t => $("#loginMsg").textContent = t;
   const setStatus = t => $("#status").textContent = t;
 
-  // ✅ Zorluk (sadece AI)
   let difficulty = "medium";
 
-  function randInt(n){
-    if (window.crypto && crypto.getRandomValues) {
-      const a = new Uint32Array(1);
-      crypto.getRandomValues(a);
-      return a[0] % n;
-    }
-    return Math.floor(Math.random()*n);
-  }
-  function pickRandom(arr){ return arr[arr.length ? randInt(arr.length) : 0]; }
-  function makeRoomCode(len=6){
-    const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let s="";
-    for(let i=0;i<len;i++) s+=chars[randInt(chars.length)];
-    return s;
-  }
-
-  /* ==========================
-     Firebase (LAZY LOAD)
-     - Sayfa Firebase hatası olsa bile açılır
-     - Online modda gerektiğinde yüklenir
-  ========================== */
+  /* Firebase lazy */
   const firebaseConfig = {
     apiKey: "AIzaSyAYzorBVSTCcE3xzDZ9PyPprBdYEzKov3c",
     authDomain: "oyun-3bfba.firebaseapp.com",
@@ -338,17 +299,13 @@
     appId: "1:120738565998:web:81876d89cafa64a1207b7f"
   };
 
-  let fb = null; // { app, db, ...fns }
-
+  let fb=null;
   async function ensureFirebase(){
     if(fb) return fb;
-
     const appMod = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
     const fsMod  = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
-
     const app = appMod.initializeApp(firebaseConfig);
     const db  = fsMod.getFirestore(app);
-
     fb = {
       db,
       doc: fsMod.doc,
@@ -363,9 +320,7 @@
     return fb;
   }
 
-  /* ==========================
-     OYUN VERİLERİ
-  ========================== */
+  /* Tahta */
   const POS = [
     [100,100],[500,100],[900,100],
     [250,250],[500,250],[750,250],
@@ -432,12 +387,9 @@
   function hasAnyLegalMove(state, p){
     const b = state.board;
     if(phaseOf(state,p)==="placing") return b.some(x=>x===null);
-
     const fly = canFly(state,p);
     const my = b.map((v,i)=> v===p ? i : -1).filter(i=>i>=0);
-
     if(fly) return b.some(x=>x===null) && my.length>0;
-
     for(const from of my){
       if(ADJ[from].some(to => b[to]===null)) return true;
     }
@@ -445,10 +397,8 @@
   }
   function checkWinner(state){
     if (state.placed.W < 9 || state.placed.B < 9) return null;
-
     const wCount = countOnBoard(state.board,'W');
     const bCount = countOnBoard(state.board,'B');
-
     if (wCount < 3 || !hasAnyLegalMove(state,'W')) return 'B';
     if (bCount < 3 || !hasAnyLegalMove(state,'B')) return 'W';
     return null;
@@ -526,7 +476,6 @@
 
     const s = clone(state);
     const opp = p==='W'?'B':'W';
-
     if(s.board[capIndex]!==opp) return null;
     if(!s.capture.removable.includes(capIndex)) return null;
 
@@ -768,12 +717,8 @@
     }
   }
 
-  /* =========================
-     STRONG AI + ZORLUK
-  ========================== */
-  function countMills(board, p){
-    return MILLS.filter(m => m.every(i => board[i]===p)).length;
-  }
+  /* AI */
+  function countMills(board, p){ return MILLS.filter(m => m.every(i => board[i]===p)).length; }
   function potentialMills(board, p){
     let c=0;
     for(const m of MILLS){
@@ -797,35 +742,25 @@
     }
     return moves;
   }
-
   function generateAllActions(state, p){
     const actions = [];
     const ph = phaseOf(state,p);
 
     if(state.capture){
       if(state.capture.by !== p) return actions;
-      for(const cap of state.capture.removable){
-        actions.push({type:'capture', cap});
-      }
+      for(const cap of state.capture.removable) actions.push({type:'capture', cap});
       return actions;
     }
 
     if(ph==="placing"){
-      for(let to=0; to<24; to++){
-        if(state.board[to]!==null) continue;
-        actions.push({type:'place', to});
-      }
+      for(let to=0; to<24; to++) if(state.board[to]===null) actions.push({type:'place', to});
       return actions;
     }
 
     const fly = canFly(state,p);
     for(let from=0; from<24; from++){
       if(state.board[from]!==p) continue;
-
-      const targets = fly
-        ? state.board.map((v,i)=> v===null ? i : -1).filter(x=>x>=0)
-        : ADJ[from].filter(to => state.board[to]===null);
-
+      const targets = fly ? state.board.map((v,i)=> v===null?i:-1).filter(x=>x>=0) : ADJ[from].filter(to => state.board[to]===null);
       for(const to of targets){
         if(violatesRepeat(state,p,from,to)) continue;
         actions.push({type:'move', from, to});
@@ -833,17 +768,14 @@
     }
     return actions;
   }
-
   function simulate(state, p, action){
     if(action.type==='place') return applyPlace(state,p,action.to);
     if(action.type==='move')  return applyMove(state,p,action.from,action.to);
     if(action.type==='capture') return applyCapture(state,p,action.cap);
     return null;
   }
-
   function evalStateStrong(state){
     const b = state.board;
-
     if(state.winner==='B') return  1e9;
     if(state.winner==='W') return -1e9;
 
@@ -864,19 +796,8 @@
     score += (potB - potW) * 28;
     score += (mobB - mobW) * 6;
 
-    const good = new Set([1,4,7,10,13,16,19,22,9,14,3,5,18,20]);
-    if(state.placed.B < 9){
-      let gb=0, gw=0;
-      for(let i=0;i<24;i++){
-        if(!good.has(i)) continue;
-        if(b[i]==='B') gb++;
-        if(b[i]==='W') gw++;
-      }
-      score += (gb - gw) * 10;
-    }
     return score;
   }
-
   function minimaxStrong(state, depth, alpha, beta, maximizingForB){
     if(depth===0 || state.winner) return {score: evalStateStrong(state), action:null};
 
@@ -941,65 +862,20 @@
       return;
     }
 
-    const ph = phaseOf(game,'B');
     const bCount = countOnBoard(game.board,'B');
+    let depth, blunderRate;
 
-    let depth;
-    let blunderRate;
-
-    if(difficulty==="easy"){
-      depth = (bCount<=3) ? 2 : 3;
-      blunderRate = 0.35;
-    }else if(difficulty==="medium"){
-      depth = (bCount<=3) ? 3 : 4;
-      blunderRate = 0.15;
-    }else{
-      depth = (bCount<=3) ? 4 : 6;
-      blunderRate = 0.03;
-    }
+    if(difficulty==="easy"){ depth = (bCount<=3) ? 2 : 3; blunderRate = 0.35; }
+    else if(difficulty==="medium"){ depth = (bCount<=3) ? 3 : 4; blunderRate = 0.15; }
+    else { depth = (bCount<=3) ? 4 : 6; blunderRate = 0.03; }
 
     const allActs = generateAllActions(game,'B');
 
-    // placing: üst hamlelerden rastgele
-    if(ph==="placing"){
-      const scored = allActs.map(a=>{
-        const s2 = simulate(game,'B',a);
-        return {a, sc: s2 ? evalStateStrong(s2) : -1e15};
-      }).sort((x,y)=> y.sc - x.sc);
-
-      let topN = (difficulty==="easy") ? 7 : (difficulty==="medium") ? 5 : 3;
-      topN = Math.min(topN, scored.length);
-      let act = pickRandom(scored.slice(0, topN).map(x=>x.a));
-
-      if(Math.random() < blunderRate && scored.length>6){
-        const idxStart = (difficulty==="easy") ? Math.floor(scored.length*0.35) : Math.floor(scored.length*0.20);
-        const slice = scored.slice(idxStart, Math.min(scored.length, idxStart+6)).map(x=>x.a);
-        act = pickRandom(slice) || act;
-      }
-
-      const next = act ? simulate(game,'B',act) : null;
-      if(next){
-        game = next; pushHistory(); render();
-        if(game.capture && game.capture.by==='B') return maybeAIMove();
-        if(game.winner) showEnd(false);
-        else setStatus("AI hamle yaptı. Sıra sende.");
-      }
-      return;
-    }
-
-    // moving: minimax + bazen hata
     const {action} = minimaxStrong(game, depth, -Infinity, Infinity, true);
     let chosen = action;
 
     if(allActs.length && Math.random() < blunderRate){
-      const scored = allActs.map(a=>{
-        const s2 = simulate(game,'B',a);
-        return {a, sc: s2 ? evalStateStrong(s2) : -1e15};
-      }).sort((x,y)=> y.sc - x.sc);
-
-      const idxStart = (difficulty==="easy") ? Math.floor(scored.length*0.35) : Math.floor(scored.length*0.20);
-      const slice = scored.slice(idxStart, Math.min(scored.length, idxStart+6)).map(x=>x.a);
-      chosen = pickRandom(slice) || action;
+      chosen = pickRandom(allActs) || action;
     }
 
     const act = chosen || pickRandom(allActs);
@@ -1036,7 +912,6 @@
   }
 
   async function logSession(extra={}){
-    // Firebase çalışmazsa oyun yine açılsın: sadece log atlamış olur.
     try{
       const { db, collection, addDoc, serverTimestamp } = await ensureFirebase();
       const name = $("#name").value.trim();
@@ -1062,6 +937,10 @@
     return {name, classroom};
   }
 
+  function normalizeRoomName(raw){
+    return raw.trim().toUpperCase().replace(/\s+/g,'-');
+  }
+
   $("#aiBtn").addEventListener("click", async ()=>{
     const info = validateLogin();
     if(!info) return;
@@ -1078,15 +957,28 @@
     const info = validateLogin();
     if(!info) return;
 
-    // Online için Firebase şart
-    const { db, doc, setDoc, serverTimestamp } = await ensureFirebase();
+    const roomNameRaw = $("#roomName").value;
+    const roomName = normalizeRoomName(roomNameRaw);
+    if(!roomName){ setLoginMsg("Oda adı yaz."); return; }
+
+    const { db, doc, setDoc, getDoc, serverTimestamp } = await ensureFirebase();
 
     mode="ONLINE"; role="HOST";
-    roomId = makeRoomCode();
+    roomId = roomName;
 
     await logSession({mode:"ONLINE_CREATE", roomId});
 
     const r = doc(db,"rooms",roomId);
+    const snap = await getDoc(r);
+
+    if(snap.exists()){
+      // oda varsa host olarak üzerine yazmıyoruz; sadece dinlemeye geçiyoruz
+      await listenRoom();
+      openGameUI();
+      setStatus("Bu oda zaten var. Host olarak bağlanıldı: " + roomId);
+      return;
+    }
+
     await setDoc(r, {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -1097,23 +989,20 @@
 
     await listenRoom();
     openGameUI();
-    setStatus("Oda oluşturuldu. Kod: " + roomId + " (Rakip bu kodla girsin)");
+    setStatus("Oda oluşturuldu: " + roomId + " (Arkadaşın aynı oda adını yazıp girsin)");
   }
 
   async function joinRoom(){
     const info = validateLogin();
     if(!info) return;
 
-    const code = $("#roomCode").value.trim().toUpperCase();
-    if(!code){
-      setLoginMsg("Oda kodu gir.");
-      return;
-    }
+    const roomNameRaw = $("#roomName").value;
+    const roomName = normalizeRoomName(roomNameRaw);
+    if(!roomName){ setLoginMsg("Oda adı yaz."); return; }
 
-    // Online için Firebase şart
     const { db, doc, getDoc, updateDoc, serverTimestamp } = await ensureFirebase();
 
-    mode="ONLINE"; role="GUEST"; roomId=code;
+    mode="ONLINE"; role="GUEST"; roomId=roomName;
 
     const r = doc(db,"rooms",roomId);
     const snap = await getDoc(r);
@@ -1131,7 +1020,7 @@
 
     await listenRoom();
     openGameUI();
-    setStatus("Odaya girdin. Oyun başlıyor.");
+    setStatus("Odaya girdin: " + roomId);
   }
 
   $("#createRoomBtn").addEventListener("click", ()=> createRoom().catch(e=>{
@@ -1210,15 +1099,13 @@
   $("#hintBtn").addEventListener("click", hint);
 
   const diffEl = document.getElementById("difficulty");
-  if(diffEl){
-    diffEl.addEventListener("change",(e)=>{
-      difficulty = e.target.value;
-      if(mode==="AI"){
-        const t = (difficulty==="easy") ? "Kolay" : (difficulty==="medium") ? "Orta" : "Zor";
-        setStatus("Zorluk seçildi: " + t);
-      }
-    });
-  }
+  diffEl?.addEventListener("change",(e)=>{
+    difficulty = e.target.value;
+    if(mode==="AI"){
+      const t = (difficulty==="easy") ? "Kolay" : (difficulty==="medium") ? "Orta" : "Zor";
+      setStatus("Zorluk seçildi: " + t);
+    }
+  });
 
   render();
   setLoginMsg("");
