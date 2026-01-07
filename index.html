@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Düzce İsabet Okulları dokuz Taş Oyunu</title>
+  <title>DÜZCE İSABET OKULLARI DOKUZ TAŞ OYUNU</title>
 
   <style>
     :root{
@@ -117,6 +117,8 @@
     }
     .bigTitle{
       font-size:18px; font-weight:950; margin:0;
+      text-transform:uppercase;
+      letter-spacing:.2px;
     }
   </style>
 </head>
@@ -140,7 +142,7 @@
     <div class="card" id="loginCard">
       <div class="titleBar">
         <div>
-          <p class="bigTitle">Düzce İsabet Okulları 9 Taş Oyunu</p>
+          <p class="bigTitle">DÜZCE İSABET OKULLARI DOKUZ TAŞ OYUNU</p>
           <div class="small">AI (tek cihaz) veya Online (oda adı ile iki kişi).</div>
         </div>
         <button id="themeBtn" style="white-space:nowrap;">🌙 Koyu</button>
@@ -166,7 +168,7 @@
 
       <div class="divider"></div>
 
-      <!-- ONLINE (oda adını sen yazıyorsun) -->
+      <!-- ONLINE -->
       <div class="card" style="background:var(--btn);">
         <div class="row" style="align-items:flex-end">
           <div style="flex:1 1 220px">
@@ -205,7 +207,7 @@
       <div class="card">
         <div class="titleBar">
           <div>
-            <p class="bigTitle">Düzce İsabet Okulları 9 Taş Oyunu</p>
+            <p class="bigTitle">DÜZCE İSABET OKULLARI DOKUZ TAŞ OYUNU</p>
             <div class="small">Resmî kurallar • AI + Online</div>
           </div>
           <button id="themeBtn2" style="white-space:nowrap;">🌙 Koyu</button>
@@ -319,6 +321,17 @@
     };
     return fb;
   }
+
+  /* Random */
+  function randInt(n){
+    if (window.crypto && crypto.getRandomValues) {
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      return a[0] % n;
+    }
+    return Math.floor(Math.random()*n);
+  }
+  function pickRandom(arr){ return arr[arr.length ? randInt(arr.length) : 0]; }
 
   /* Tahta */
   const POS = [
@@ -617,10 +630,7 @@
   }
 
   /* History (AI only) */
-  function pushHistory(){
-    history.push(clone(game));
-    $("#undoBtn").disabled = history.length<=1 || mode==="ONLINE";
-  }
+  function pushHistory(){ history.push(clone(game)); }
   function undo(){
     if(mode==="ONLINE") return;
     if(history.length<=1) return;
@@ -641,16 +651,16 @@
       const { db, doc, updateDoc, serverTimestamp } = await ensureFirebase();
       const r = doc(db,"rooms",roomId);
       await updateDoc(r, { game, updatedAt: serverTimestamp() });
-    }else{
-      pushHistory();
       render();
-      if(game.winner){
-        showEnd(game.winner===myPlayer());
-        return;
-      }
-      await maybeAIMove();
+      if(game.winner) showEnd(game.winner===myPlayer());
+      return;
     }
 
+    pushHistory();
+    render();
+    if(game.winner){ showEnd(game.winner===myPlayer()); return; }
+
+    await maybeAIMove();
     render();
     if(game.winner) showEnd(game.winner===myPlayer());
   }
@@ -662,31 +672,19 @@
     const me = myPlayer();
 
     if(game.capture){
-      if(game.capture.by !== me){
-        setStatus("Taş alma sırası sende değil.");
-        return;
-      }
+      if(game.capture.by !== me){ setStatus("Taş alma sırası sende değil."); return; }
       const next = applyCapture(game, me, i);
-      if(!next){
-        setStatus("Geçersiz taş alma. (Değirmende olmayan taş seç.)");
-        return;
-      }
+      if(!next){ setStatus("Geçersiz taş alma. (Değirmende olmayan taş seç.)"); return; }
       await commit(next);
       setStatus("Taş alındı. Rakip sırası.");
       return;
     }
 
-    if(game.turn !== me){
-      setStatus("Sıra sende değil.");
-      return;
-    }
+    if(game.turn !== me){ setStatus("Sıra sende değil."); return; }
 
     if(phaseOf(game,me)==="placing"){
       const next = applyPlace(game, me, i);
-      if(!next){
-        setStatus("Oraya koyamazsın.");
-        return;
-      }
+      if(!next){ setStatus("Oraya koyamazsın."); return; }
       await commit(next);
       if(next.capture) setStatus("Değirmen yaptın! Rakibin bir taşını kaldır.");
       else setStatus("Hamle yapıldı.");
@@ -707,17 +705,17 @@
     if(game.board[i]===null && selected!==null){
       const from = selected;
       const next = applyMove(game, me, from, i);
-      if(!next){
-        setStatus("Geçersiz hamle. (Komşu olmalı / uçma / aynı hamle yasak.)");
-        return;
-      }
+      if(!next){ setStatus("Geçersiz hamle. (Komşu olmalı / uçma / aynı hamle yasak.)"); return; }
       await commit(next);
       if(next.capture) setStatus("Değirmen yaptın! Rakibin bir taşını kaldır.");
       else setStatus("Hamle yapıldı.");
     }
   }
 
-  /* AI */
+  /* =========================
+     SERİ AI (DONMA YOK) ✅
+     - Zaman limiti + yedek hamle
+     ========================= */
   function countMills(board, p){ return MILLS.filter(m => m.every(i => board[i]===p)).length; }
   function potentialMills(board, p){
     let c=0;
@@ -742,6 +740,7 @@
     }
     return moves;
   }
+
   function generateAllActions(state, p){
     const actions = [];
     const ph = phaseOf(state,p);
@@ -760,7 +759,10 @@
     const fly = canFly(state,p);
     for(let from=0; from<24; from++){
       if(state.board[from]!==p) continue;
-      const targets = fly ? state.board.map((v,i)=> v===null?i:-1).filter(x=>x>=0) : ADJ[from].filter(to => state.board[to]===null);
+      const targets = fly
+        ? state.board.map((v,i)=> v===null?i:-1).filter(x=>x>=0)
+        : ADJ[from].filter(to => state.board[to]===null);
+
       for(const to of targets){
         if(violatesRepeat(state,p,from,to)) continue;
         actions.push({type:'move', from, to});
@@ -768,12 +770,14 @@
     }
     return actions;
   }
+
   function simulate(state, p, action){
     if(action.type==='place') return applyPlace(state,p,action.to);
     if(action.type==='move')  return applyMove(state,p,action.from,action.to);
     if(action.type==='capture') return applyCapture(state,p,action.cap);
     return null;
   }
+
   function evalStateStrong(state){
     const b = state.board;
     if(state.winner==='B') return  1e9;
@@ -798,7 +802,9 @@
 
     return score;
   }
-  function minimaxStrong(state, depth, alpha, beta, maximizingForB){
+
+  function minimaxTimed(state, depth, alpha, beta, maximizingForB, deadline){
+    if(performance.now() > deadline) return {score: evalStateStrong(state), action:null};
     if(depth===0 || state.winner) return {score: evalStateStrong(state), action:null};
 
     const p = maximizingForB ? 'B' : 'W';
@@ -808,14 +814,22 @@
     const cap = actions.filter(a=>a.type==='capture');
     if(cap.length) actions = cap;
 
+    // Hız için basit sıralama
+    actions.sort((a,b)=>{
+      const ra = (a.type==='capture'?1000:0) + (a.type==='move'?40:0) + (a.type==='place'?20:0);
+      const rb = (b.type==='capture'?1000:0) + (b.type==='move'?40:0) + (b.type==='place'?20:0);
+      return rb-ra;
+    });
+
     let bestAction=null;
 
     if(maximizingForB){
       let best=-Infinity;
       for(const act of actions){
+        if(performance.now() > deadline) break;
         const next = simulate(state,'B',act);
         if(!next) continue;
-        const res = minimaxStrong(next, depth-1, alpha, beta, false);
+        const res = minimaxTimed(next, depth-1, alpha, beta, false, deadline);
         if(res.score>best){ best=res.score; bestAction=act; }
         alpha = Math.max(alpha,best);
         if(beta<=alpha) break;
@@ -824,9 +838,10 @@
     }else{
       let best=Infinity;
       for(const act of actions){
+        if(performance.now() > deadline) break;
         const next = simulate(state,'W',act);
         if(!next) continue;
-        const res = minimaxStrong(next, depth-1, alpha, beta, true);
+        const res = minimaxTimed(next, depth-1, alpha, beta, true, deadline);
         if(res.score<best){ best=res.score; bestAction=act; }
         beta = Math.min(beta,best);
         if(beta<=alpha) break;
@@ -835,14 +850,29 @@
     }
   }
 
+  function pickBestHeuristic(state, p, actions){
+    // “Donma yok” yedek: tek hamle ileri bakıp en iyi puanı seç
+    const scored = actions.map(a=>{
+      const s2 = simulate(state, p, a);
+      return {a, sc: s2 ? evalStateStrong(s2) : -1e15};
+    }).sort((x,y)=> y.sc - x.sc);
+
+    // biraz çeşitlilik: ilk 4’ten rastgele seç (ama iyi hamlelerden)
+    const topN = Math.min(4, scored.length);
+    const top = scored.slice(0, topN).map(x=>x.a);
+    return pickRandom(top) || scored[0]?.a || null;
+  }
+
   async function maybeAIMove(){
     if(mode!=="AI") return;
     if(game.winner) return;
     if(game.turn!=='B') return;
 
     setStatus("AI düşünüyor...");
-    await sleep(160);
+    // UI'nin “takılmaması” için çok kısa bekleme
+    await sleep(60);
 
+    // Capture varsa çok hızlı seç
     if(game.capture && game.capture.by==='B'){
       const caps = game.capture.removable;
       let bestCap = caps[0];
@@ -862,34 +892,75 @@
       return;
     }
 
-    const bCount = countOnBoard(game.board,'B');
-    let depth, blunderRate;
-
-    if(difficulty==="easy"){ depth = (bCount<=3) ? 2 : 3; blunderRate = 0.35; }
-    else if(difficulty==="medium"){ depth = (bCount<=3) ? 3 : 4; blunderRate = 0.15; }
-    else { depth = (bCount<=3) ? 4 : 6; blunderRate = 0.03; }
-
     const allActs = generateAllActions(game,'B');
-
-    const {action} = minimaxStrong(game, depth, -Infinity, Infinity, true);
-    let chosen = action;
-
-    if(allActs.length && Math.random() < blunderRate){
-      chosen = pickRandom(allActs) || action;
+    if(!allActs.length){
+      game.winner = 'W';
+      render();
+      showEnd(true);
+      return;
     }
 
-    const act = chosen || pickRandom(allActs);
-    const next = act ? simulate(game,'B',act) : null;
+    // ✅ Telefonlar için süre limiti (donma yok)
+    // Kolay: 70ms, Orta: 110ms, Zor: 170ms
+    const timeBudget =
+      (difficulty==="easy") ? 70 :
+      (difficulty==="medium") ? 110 : 170;
 
+    // Derinlikleri de mobil uyumlu tuttuk
+    const bCount = countOnBoard(game.board,'B');
+    let depth =
+      (difficulty==="easy") ? 2 :
+      (difficulty==="medium") ? (bCount<=3 ? 3 : 3) :
+      (bCount<=3 ? 4 : 4);
+
+    // Zor bile olsa 4’ü aşmıyoruz (telefon donmasın)
+    depth = Math.min(depth, 4);
+
+    // Blunder (kolay/orta)
+    const blunderRate = (difficulty==="easy") ? 0.30 : (difficulty==="medium") ? 0.12 : 0.03;
+
+    let chosen=null;
+
+    try{
+      const deadline = performance.now() + timeBudget;
+      const res = minimaxTimed(game, depth, -Infinity, Infinity, true, deadline);
+      chosen = res.action;
+    }catch(e){
+      console.warn("AI minimax hata, yedek hamle:", e);
+      chosen = null;
+    }
+
+    // Süre bitti / action yoksa: yedek hızlı hamle
+    if(!chosen){
+      chosen = pickBestHeuristic(game,'B',allActs);
+    }
+
+    // Kolay/Orta: bazen daha kötü hamle seçsin (ama yine hızlı)
+    if(Math.random() < blunderRate && allActs.length>4){
+      chosen = pickRandom(allActs) || chosen;
+    }
+
+    const next = chosen ? simulate(game,'B',chosen) : null;
     if(next){
       game = next; pushHistory(); render();
+      // arka arkaya capture gerekirse seri devam
       if(game.capture && game.capture.by==='B') return maybeAIMove();
       if(game.winner) showEnd(false);
       else setStatus("AI hamle yaptı. Sıra sende.");
     }else{
-      game.winner = 'W';
-      render();
-      showEnd(true);
+      // En kötü ihtimal: random hamle
+      const fallback = pickRandom(allActs);
+      const next2 = fallback ? simulate(game,'B',fallback) : null;
+      if(next2){
+        game = next2; pushHistory(); render();
+        if(game.capture && game.capture.by==='B') return maybeAIMove();
+        if(game.winner) showEnd(false);
+        else setStatus("AI hamle yaptı. Sıra sende.");
+      }else{
+        game.winner = 'W';
+        render();
+        showEnd(true);
+      }
     }
   }
 
@@ -899,10 +970,12 @@
     if(game.turn!==myPlayer()) return;
     if(game.capture) { setStatus("Önce taş alman gerekiyor."); return; }
 
-    const {action} = minimaxStrong(game, 3, -Infinity, Infinity, false);
-    if(!action){ setStatus("İpucu bulunamadı."); return; }
-    if(action.type==='place') setStatus(`İpucu: ${action.to+1}. noktaya taş koy.`);
-    if(action.type==='move') setStatus(`İpucu: ${action.from+1} → ${action.to+1}.`);
+    const actions = generateAllActions(game,'W');
+    const best = pickBestHeuristic(game,'W',actions);
+    if(!best){ setStatus("İpucu bulunamadı."); return; }
+    if(best.type==='place') setStatus(`İpucu: ${best.to+1}. noktaya taş koy.`);
+    if(best.type==='move') setStatus(`İpucu: ${best.from+1} → ${best.to+1}.`);
+    if(best.type==='capture') setStatus(`İpucu: ${best.cap+1}. taşı al.`);
   }
 
   function openGameUI(){
@@ -922,9 +995,7 @@
         userAgent: navigator.userAgent,
         ...extra
       });
-    }catch(e){
-      console.warn("Session log atlanıyor:", e);
-    }
+    }catch(e){ /* log şart değil */ }
   }
 
   function validateLogin(){
@@ -972,7 +1043,6 @@
     const snap = await getDoc(r);
 
     if(snap.exists()){
-      // oda varsa host olarak üzerine yazmıyoruz; sadece dinlemeye geçiyoruz
       await listenRoom();
       openGameUI();
       setStatus("Bu oda zaten var. Host olarak bağlanıldı: " + roomId);
